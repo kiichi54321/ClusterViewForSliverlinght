@@ -1,0 +1,154 @@
+﻿<UserControl x:Class="ClusterViewForSliverlinght.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="438" d:DesignWidth="842">
+
+    <Grid x:Name="LayoutRoot" Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="268*" />
+        </Grid.RowDefinitions>
+        <StackPanel Name="stackPanel1" Orientation="Horizontal">
+            <Border  Padding="5">
+            <TextBlock Text="クラスターテーブル" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"></TextBlock>
+            </Border>
+            <Button Content="Tableファイル読み込み" Height="24" Name="button1" Width="115" Click="button1_Click" />
+            <Button Content="関係ファイル読み込み" Height="23" Name="button4" Width="105" Click="button4_Click" />
+            <Button Content="保存" Height="23" Name="button2" Width="75" Click="button2_Click" />
+            <Button Content="読み込み" Height="23" Name="button3" Width="75" Click="button3_Click" />
+            <ComboBox Height="24" Name="comboBox1" Width="100" SelectedIndex="1">
+                <ComboBoxItem>確信度</ComboBoxItem>
+                <ComboBoxItem>補正確信度</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <ContentControl Name="ClusterTableView">
+                <StackPanel >
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="50"></Border>
+                        <ItemsControl ItemsSource="{Binding Categories}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="180" Padding="2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20"></ColumnDefinition>
+                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                                <ColumnDefinition Width="20"></ColumnDefinition>
+                                            </Grid.ColumnDefinitions>
+                                            <Button Content="＜" FontWeight="Bold" Tag="{Binding}" Click="LeftButton_Click">                 </Button>
+                                            <Button Grid.Column="2" Content="＞" FontWeight="Bold" Tag="{Binding}" Click="RightButton_Click">                                            </Button>
+                                            <TextBox Text="{Binding Name,Mode=TwoWay}" Grid.Column="1" ></TextBox>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding CategoryAttributeGroup}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel></StackPanel>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border>
+                                        <TextBlock Width="50" Text="{Binding Name}"></TextBlock>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"></StackPanel>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="180"  Padding="2">
+                                                    <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <ItemsControl ItemsSource="{Binding LayerGroup}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel></StackPanel>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border>
+                                        <TextBlock Width="50" Text="{Binding Name}"></TextBlock>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"></StackPanel>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="180" BorderBrush="Black" BorderThickness="1" Padding="2">
+                                                    <ItemsControl ItemsSource="{Binding Comunities}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel ></StackPanel>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Background="{Binding Brush}" >
+                                                                <TextBlock Text="{Binding Name}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown"></TextBlock>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="50"></Border>
+                        <ItemsControl ItemsSource="{Binding Categories}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="180" Padding="2">
+                                        <Grid>
+                                            <TextBlock Text="{Binding KeyName}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </ContentControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
