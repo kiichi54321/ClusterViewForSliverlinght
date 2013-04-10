@@ -38,20 +38,7 @@ namespace ClusterViewForSliverlinght
             
         }
 
-        private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            TextBlock tb = sender as TextBlock;
-            Comunity c = tb.Tag as Comunity;
-            if (((ComboBoxItem)comboBox1.SelectedItem).Content.ToString() == "確信度")
-            {
-                clusterTable.ViewRelation(c, 10, RelationIndexType.確信度);
-            }
-            else
-            {
-                clusterTable.ViewRelation(c, 10, RelationIndexType.補正確信度);
-            }
-//            c.Brush = new SolidColorBrush(Colors.Orange);
-        }
+
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
@@ -94,6 +81,7 @@ namespace ClusterViewForSliverlinght
             {                
               clusterTable =  ClusterTable.Load(openFileDialog1.File.OpenRead());
               ClusterTableView.DataContext = clusterTable;
+              FilePanel.Visibility = System.Windows.Visibility.Collapsed;
             }
         }
 
@@ -112,6 +100,103 @@ namespace ClusterViewForSliverlinght
             }
         }
 
+
+        bool itemDragging = false;
+        Comunity dragItem = null;
+
+        private void ItemsControl_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (itemDragging)
+            {
+                var control = sender as Border;
+                control.BorderBrush = new SolidColorBrush(Colors.Red);
+                control.BorderThickness = new Thickness(1);
+            }
+        }
+
+        private void ItemsControl_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (itemDragging)
+            {
+                var control = sender as Border;
+                control.BorderBrush = new SolidColorBrush(Colors.Black);
+                control.BorderThickness = new Thickness(1);
+            }
+        }
+
+        private void ItemsControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (mouseOverComunity != dragItem)
+            {
+                if (itemDragging)
+                {
+
+                    var control = sender as Border;
+                    control.BorderBrush = new SolidColorBrush(Colors.Black);
+                    control.BorderThickness = new Thickness(1);
+                    var layer = control.Tag as Layer;
+
+                    clusterTable.MoveComunity(dragItem, mouseOverComunity, layer);
+                    itemDragging = false;
+                    dragItem = null;
+                }
+            }
+        }
+
+        private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            FrameworkElement tb = sender as FrameworkElement;
+            Comunity c = tb.Tag as Comunity;
+            if (((ComboBoxItem)comboBox1.SelectedItem).Content.ToString() == "確信度")
+            {
+                clusterTable.ViewRelation(c, (int)RelationCountSlider.Value, RelationIndexType.確信度);
+            }
+            else
+            {
+                clusterTable.ViewRelation(c, (int)RelationCountSlider.Value, RelationIndexType.補正確信度);
+            }
+            dragItem = c;
+            itemDragging = true; 
+            mouseOverComunity = c;
+        }
+
+
+        Comunity mouseOverComunity = null;
+        private void TextBlock_MouseEnter(object sender, MouseEventArgs e)
+        {
+            FrameworkElement tb = sender as FrameworkElement;
+            Comunity c = tb.Tag as Comunity;
+            mouseOverComunity = c;
+        }
+
+        private void Border_MouseLeave(object sender, MouseEventArgs e)
+        {
+            mouseOverComunity = null;
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            if (FilePanel.Visibility == System.Windows.Visibility.Visible)
+            {
+                FilePanel.Visibility = System.Windows.Visibility.Collapsed;
+            }
+            else
+            {
+                FilePanel.Visibility = System.Windows.Visibility.Visible;
+            }
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            if (ViewSettingPanel.Visibility == System.Windows.Visibility.Visible)
+            {
+                ViewSettingPanel.Visibility = System.Windows.Visibility.Collapsed;
+            }
+            else
+            {
+                ViewSettingPanel.Visibility = System.Windows.Visibility.Visible;
+            }
+        }
 
     }
 

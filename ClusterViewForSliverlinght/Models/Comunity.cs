@@ -39,6 +39,9 @@ namespace ClusterViewForSliverlinght.Models
         public string Tag { get; set; }
         [DataMember]
         public double Index { get; set; }
+        [DataMember]
+        public int Count { get; set; }
+
 
         private List<ItemRelation> relations = new List<ItemRelation>();
         [DataMember]

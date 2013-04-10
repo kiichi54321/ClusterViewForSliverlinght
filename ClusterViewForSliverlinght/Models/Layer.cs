@@ -18,14 +18,14 @@ namespace ClusterViewForSliverlinght.Models
     {
         public Layer()
         {
-            comunities = new List<Comunity>();
+            comunities = new System.Collections.ObjectModel.ObservableCollection<Comunity>(); 
         }
         //    [DataMember]
         public Category Category { get; set; }
         [DataMember]
         public string Name { get; set; }
         [DataMember]
-        public List<Comunity> Comunities
+        public System.Collections.ObjectModel.ObservableCollection<Comunity> Comunities
         {
             get
             {
@@ -37,7 +37,7 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
-        List<Comunity> comunities = new List<Comunity>();
+        System.Collections.ObjectModel.ObservableCollection<Comunity> comunities = new System.Collections.ObjectModel.ObservableCollection<Comunity>();
     }
 
     [DataContract]

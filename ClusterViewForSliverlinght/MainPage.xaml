@@ -3,32 +3,53 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tool="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Toolkit"
+    xmlns:Lib="clr-namespace:ClusterViewForSliverlinght.Lib"
     mc:Ignorable="d"
     d:DesignHeight="438" d:DesignWidth="842">
-
+    <UserControl.Resources>
+        <Lib:BooleanToHiddenVisibility x:Key="boolToVis"/>
+    </UserControl.Resources>
     <Grid x:Name="LayoutRoot" Background="White">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="120" />
+            <ColumnDefinition Width="120" />
+            <ColumnDefinition Width="120" />
+            <ColumnDefinition Width="492*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
             <RowDefinition Height="268*" />
         </Grid.RowDefinitions>
-        <StackPanel Name="stackPanel1" Orientation="Horizontal">
-            <Border  Padding="5">
+        <Border  Padding="5">
             <TextBlock Text="クラスターテーブル" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"></TextBlock>
-            </Border>
-            <Button Content="Tableファイル読み込み" Height="24" Name="button1" Width="115" Click="button1_Click" />
-            <Button Content="関係ファイル読み込み" Height="23" Name="button4" Width="105" Click="button4_Click" />
-            <Button Content="保存" Height="23" Name="button2" Width="75" Click="button2_Click" />
-            <Button Content="読み込み" Height="23" Name="button3" Width="75" Click="button3_Click" />
+        </Border>
+        <Button Grid.Column="1" Margin="5" Content="ファイル関係" Click="Button_Click_1"></Button>
+        <Button Grid.Column="2" Margin="5" Content="表示設定" Click="Button_Click_2"></Button>
+        <StackPanel Name="stackPanel1" Orientation="Horizontal"  Grid.Column="3" Grid.ColumnSpan="2">
+
             <ComboBox Height="24" Name="comboBox1" Width="100" SelectedIndex="1">
                 <ComboBoxItem>確信度</ComboBoxItem>
                 <ComboBoxItem>補正確信度</ComboBoxItem>
             </ComboBox>
+            <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
+
+            </Border>
+            <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="関係の数" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                    <Slider Name="RelationCountSlider" Width="100" Maximum="20" Minimum="1" LargeChange="5" SmallChange="1" Value="10" />
+                    <TextBlock Text="{Binding ElementName=RelationCountSlider,Path=Value, StringFormat=F0}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Text="個" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
+            </Border>
+        
         </StackPanel>
-        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="4">
             <ContentControl Name="ClusterTableView">
                 <StackPanel >
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="50"></Border>
+                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
                         <ItemsControl ItemsSource="{Binding Categories}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -37,15 +58,15 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Width="180" Padding="2">
+                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="20"></ColumnDefinition>
                                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                                 <ColumnDefinition Width="20"></ColumnDefinition>
                                             </Grid.ColumnDefinitions>
-                                            <Button Content="＜" FontWeight="Bold" Tag="{Binding}" Click="LeftButton_Click">                 </Button>
-                                            <Button Grid.Column="2" Content="＞" FontWeight="Bold" Tag="{Binding}" Click="RightButton_Click">                                            </Button>
+                                            <Button Content="＜" FontWeight="Bold" Tag="{Binding}" Click="LeftButton_Click"></Button>
+                                            <Button Grid.Column="2" Content="＞" FontWeight="Bold" Tag="{Binding}" Click="RightButton_Click"></Button>
                                             <TextBox Text="{Binding Name,Mode=TwoWay}" Grid.Column="1" ></TextBox>
                                         </Grid>
                                     </Border>
@@ -64,17 +85,17 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <Border>
-                                        <TextBlock Width="50" Text="{Binding Name}"></TextBlock>
+                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
                                     </Border>
-                                    <ItemsControl ItemsSource="{Binding Items}">
+                                    <ItemsControl ItemsSource="{Binding Items}" Tag="{Binding Items}" >
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"></StackPanel>
+                                                <StackPanel Orientation="Horizontal" ></StackPanel>
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Width="180"  Padding="2">
+                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}"  Padding="2">
                                                     <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                                                 </Border>
                                             </DataTemplate>
@@ -95,7 +116,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <Border>
-                                        <TextBlock Width="50" Text="{Binding Name}"></TextBlock>
+                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
                                     </Border>
                                     <ItemsControl ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemsPanel>
@@ -105,21 +126,31 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Width="180" BorderBrush="Black" BorderThickness="1" Padding="2">
-                                                    <ItemsControl ItemsSource="{Binding Comunities}">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <StackPanel ></StackPanel>
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border Background="{Binding Brush}" >
-                                                                <TextBlock Text="{Binding Name}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown"></TextBlock>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
+
+                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" MinHeight="20" BorderBrush="Black" BorderThickness="1" Padding="2" Tag="{Binding}" MouseEnter="ItemsControl_MouseEnter" MouseLeave="ItemsControl_MouseLeave" MouseLeftButtonUp="ItemsControl_MouseLeftButtonUp" Background="White">
+
+                                                    <ScrollViewer MaxHeight="{Binding Path=Value,ElementName=MaxHeightSlider,Mode=TwoWay}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                                        <ItemsControl ItemsSource="{Binding Comunities}" >
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel ></StackPanel>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="{Binding Brush}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown" MouseEnter="TextBlock_MouseEnter" MouseLeave="Border_MouseLeave" >
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding Name}" ></TextBlock>
+                                                                            <TextBlock Text="(" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                            <TextBlock Text="{Binding Count}" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                            <TextBlock Text=")" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -129,7 +160,8 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="50"></Border>
+                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
+
                         <ItemsControl ItemsSource="{Binding Categories}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -138,7 +170,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Width="180" Padding="2">
+                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
                                         <Grid>
                                             <TextBlock Text="{Binding KeyName}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                                         </Grid>
@@ -150,5 +182,35 @@
                 </StackPanel>
             </ContentControl>
         </ScrollViewer>
+
+        <StackPanel Grid.Column="1" Grid.Row="1" Name="FilePanel" Visibility="Collapsed">
+            <Border BorderThickness="1" BorderBrush="Black" Background="White">
+                <StackPanel Background="White">
+                    <Button Content="Tableファイル読み込み" Height="24" Name="button1"  Click="button1_Click" Margin="2" />
+                    <Button Content="関係ファイル読み込み" Height="23" Name="button4"  Click="button4_Click" Margin="2" />
+                    <Button Content="保存" Height="23" Name="button2"  Click="button2_Click" Margin="2" />
+                    <Button Content="読み込み" Height="23" Name="button3" Click="button3_Click" Margin="2" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Grid.Row="1" Name="ViewSettingPanel" Visibility="Collapsed" >
+            <Border BorderThickness="1" BorderBrush="Black" Background="White">
+                <StackPanel Background="White">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <TextBlock Text="枠の高さ" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                        <Slider Name="MaxHeightSlider" Width="70" Maximum="600" Minimum="60" LargeChange="20" SmallChange="10" Value="200" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <TextBlock Text="枠の横幅" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                        <Slider Name="MaxWidthSlider" Width="70" Maximum="300" Minimum="60" LargeChange="20" SmallChange="10" Value="180" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <TextBlock Text="項目の横幅" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                        <Slider Name="MaxHeaderWidthSlider" Width="60" Maximum="150" Minimum="10" LargeChange="20" SmallChange="10" Value="50" />
+                    </StackPanel>
+                    <CheckBox Content="カウントの表示" Name="CountViewCheckBox" Margin="2"></CheckBox>
+                </StackPanel> 
+            </Border>
+        </StackPanel>
     </Grid>
 </UserControl>

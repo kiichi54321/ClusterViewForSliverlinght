@@ -152,6 +152,7 @@ namespace ClusterViewForSliverlinght.Models
                 Comunity comunity = new Comunity()
                 {
                     Id = item.GetIntValue("Community_Id"),
+                    Count = item.GetIntValue("User_Idのカウント",0),
                     //  ImageUrl = item.GetValue("Image_Url"),
                     //  Index = item.GetDoubleValue("Index"),
                     Name = item.GetValue("Community_Name")
@@ -316,14 +317,53 @@ namespace ClusterViewForSliverlinght.Models
             }
             comunity.NewBrush(Colors.Red, 0.8);
 
+            int half = max / 2;
+            int count = 0;
             foreach (var item in comunity.Relations.OrderByDescending(n => n.GetIndex(type)).Take(max))
             {
                 if (comunityDic.ContainsKey(item.ItemId))
                 {
-                    comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.5);
+                    if (count > half)
+                    {
+                        comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.2);
+                    }else
+                    {
+                        comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.6);
+                    }
+                    count++;
                 }
             }
 
+        }
+
+        public void MoveComunity(Comunity comunity,Comunity mouseOver, Layer moveTolayer)
+        {
+            Layer currentLayer = null;
+            foreach (var item in this.LayerGroup)
+            {
+                foreach (var layer in item.Items)
+                {
+                    if (layer.Comunities.Contains(comunity))
+                    {
+                        currentLayer = layer;
+                        break;
+                    }
+                }
+            }
+
+         //   if (currentLayer != moveTolayer)
+            {
+                currentLayer.Comunities.Remove(comunity);
+                if (mouseOver !=null && moveTolayer.Comunities.Contains(mouseOver))
+                {
+                    var p = moveTolayer.Comunities.IndexOf(mouseOver);
+                    moveTolayer.Comunities.Insert(p, comunity);
+                }
+                else
+                {
+                    moveTolayer.Comunities.Add(comunity);
+                }
+            }
         }
 
     }
