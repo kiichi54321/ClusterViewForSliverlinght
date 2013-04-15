@@ -4,7 +4,12 @@ using System.Collections.Generic;
 
 namespace ClusterViewForSliverlinght
 {
-    public class TSVFile
+    public interface IFile
+    {
+        int GetIndex(string column);
+    }
+
+    public class TSVFile:IFile
     {
         StreamReader steram;
         public TSVFile(StreamReader stream)
@@ -19,7 +24,7 @@ namespace ClusterViewForSliverlinght
 
         Dictionary<string, int> headerDic = new Dictionary<string, int>();
 
-        internal int GetIndex(string column)
+        public int GetIndex(string column)
         {
             if (headerDic.ContainsKey(column))
             {
@@ -61,16 +66,95 @@ namespace ClusterViewForSliverlinght
         }
     }
 
+    public class TSVFile<T>:IFile
+        where T:TSVLine,new()
+    {
+        StreamReader steram;
+        public TSVFile(StreamReader stream)
+        {
+            this.steram = stream;
+        }
+
+        public TSVFile(string fileName)
+        {
+            this.steram = new StreamReader(fileName);
+        }
+
+        Dictionary<string, int> headerDic = new Dictionary<string, int>();
+
+        public int GetIndex(string column)
+        {
+            if (headerDic.ContainsKey(column))
+            {
+                return headerDic[column];
+            }
+            else
+            {
+                return -1;
+            }
+        }
+
+        public static IEnumerable<T> ReadLines(StreamReader stream)
+        {
+            TSVFile<T> r = new TSVFile<T>(stream);
+            return r.Lines;
+        }
+
+
+
+        public IEnumerable<T> Lines
+        {
+            get
+            {
+                StreamReader sr = steram;
+                string first = sr.ReadLine();
+                int i = 0;
+                headerDic.Clear();
+                foreach (var item in first.Split('\t'))
+                {
+                    headerDic.Add(item, i);
+                    i++;
+                }
+
+                while (sr.Peek() > -1)
+                {
+                    T t = new T();
+                    t.Line = sr.ReadLine();
+                    t.SetCsvRead(this);
+                    yield return t;
+                }
+            }
+        }
+    }
+
     public class TSVLine
     {
         string line;
+
+        public string Line
+        {
+            get { return line; }
+            set { line = value;
+            this.data = line.Split('\t');
+            }
+        }
         string[] data;
-        TSVFile csvRead;
-        public TSVLine(string line,TSVFile read)
+        IFile csvRead;
+
+
+        public TSVLine(string line,IFile read)
         {
             this.line = line;
             this.csvRead = read;
             this.data = line.Split('\t');
+        }
+        public TSVLine()
+        {
+        }
+
+        public void SetCsvRead(IFile file)
+        {
+            csvRead = file;
         }
 
         public string GetValue(int index)

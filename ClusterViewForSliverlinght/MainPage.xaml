@@ -15,11 +15,13 @@
             <ColumnDefinition Width="120" />
             <ColumnDefinition Width="120" />
             <ColumnDefinition Width="120" />
-            <ColumnDefinition Width="492*" />
+            <ColumnDefinition Width="282*" />
+            <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
-            <RowDefinition Height="268*" />
+            <RowDefinition Height="382*" />
+            <RowDefinition Height="32" />
         </Grid.RowDefinitions>
         <Border  Padding="5">
             <TextBlock Text="クラスターテーブル" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"></TextBlock>
@@ -33,9 +35,6 @@
                 <ComboBoxItem>補正確信度</ComboBoxItem>
             </ComboBox>
             <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
-
-            </Border>
-            <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="関係の数" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                     <Slider Name="RelationCountSlider" Width="100" Maximum="20" Minimum="1" LargeChange="5" SmallChange="1" Value="10" />
@@ -43,9 +42,14 @@
                     <TextBlock Text="個" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                 </StackPanel>
             </Border>
-        
+            <TextBlock Text="モード" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+            <ComboBox Height="24" Name="modeComboBox" Width="70" SelectedIndex="1"  SelectionChanged="modeComboBox_SelectionChanged">
+                <ComboBoxItem>選択</ComboBoxItem>
+                <ComboBoxItem>移動</ComboBoxItem>
+                <ComboBoxItem>削除</ComboBoxItem>
+            </ComboBox>
         </StackPanel>
-        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="4">
+        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="5" >
             <ContentControl Name="ClusterTableView">
                 <StackPanel >
                     <StackPanel Orientation="Horizontal">
@@ -138,9 +142,12 @@
                                                             </ItemsControl.ItemsPanel>
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Border Background="{Binding Brush}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown" MouseEnter="TextBlock_MouseEnter" MouseLeave="Border_MouseLeave" >
+                                                                    <Border Background="{Binding Brush}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown" MouseEnter="TextBlock_MouseEnter" MouseLeave="Border_MouseLeave"  Visibility="{Binding Visibility}">
                                                                         <StackPanel Orientation="Horizontal">
-                                                                            <TextBlock Text="{Binding Name}" ></TextBlock>
+                                                                            <ToolTipService.ToolTip>
+                                                                                <Image Source="{Binding ImageUrl}" Visibility="{Binding ImageVisibility}"></Image>
+                                                                            </ToolTipService.ToolTip>
+                                                                            <TextBlock Text="{Binding Name}" Foreground="{Binding ForeBrush}" ></TextBlock>
                                                                             <TextBlock Text="(" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
                                                                             <TextBlock Text="{Binding Count}" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
                                                                             <TextBlock Text=")" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
@@ -179,21 +186,28 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
+
                 </StackPanel>
             </ContentControl>
         </ScrollViewer>
-
-        <StackPanel Grid.Column="1" Grid.Row="1" Name="FilePanel" Visibility="Collapsed">
+        <!--メニュー関係開始 -->
+        <!--ファイル関係 -->
+        <StackPanel Grid.Column="1" Grid.Row="1" Name="FilePanel" Visibility="Collapsed" Grid.RowSpan="2">
             <Border BorderThickness="1" BorderBrush="Black" Background="White">
                 <StackPanel Background="White">
                     <Button Content="Tableファイル読み込み" Height="24" Name="button1"  Click="button1_Click" Margin="2" />
                     <Button Content="関係ファイル読み込み" Height="23" Name="button4"  Click="button4_Click" Margin="2" />
+                    <Button Content="User属性読み込み" Height="23" Name="button6"  Click="button6_Click" Margin="2" />
+                    <Button Content="Userコミュニティ読み込み" Height="23" Name="button7"  Click="button7_Click" Margin="2" />
+                    <Border Height="2"></Border>
                     <Button Content="保存" Height="23" Name="button2"  Click="button2_Click" Margin="2" />
                     <Button Content="読み込み" Height="23" Name="button3" Click="button3_Click" Margin="2" />
+                    
                 </StackPanel>
             </Border>
         </StackPanel>
-        <StackPanel Grid.Column="2" Grid.Row="1" Name="ViewSettingPanel" Visibility="Collapsed" >
+        <!--表示設定 -->
+        <StackPanel Grid.Column="2" Grid.Row="1" Name="ViewSettingPanel" Visibility="Collapsed" Grid.RowSpan="2">
             <Border BorderThickness="1" BorderBrush="Black" Background="White">
                 <StackPanel Background="White">
                     <StackPanel Orientation="Horizontal" Margin="2">
@@ -209,8 +223,79 @@
                         <Slider Name="MaxHeaderWidthSlider" Width="60" Maximum="150" Minimum="10" LargeChange="20" SmallChange="10" Value="50" />
                     </StackPanel>
                     <CheckBox Content="カウントの表示" Name="CountViewCheckBox" Margin="2"></CheckBox>
-                </StackPanel> 
+                </StackPanel>
             </Border>
         </StackPanel>
+        <!--ユーザ属性関係 -->
+
+        <Button Content="属性情報"  Name="button5" Margin="5" Grid.Column="4" Grid.Row="2" Click="button5_Click"/>
+        <ContentControl Name="AttributeContentControl"  Grid.Column="4" Grid.Row="1" VerticalAlignment="Bottom"   Visibility="Collapsed" HorizontalAlignment="Right">
+            <Border BorderThickness="1" Background="White" BorderBrush="Black">
+                <StackPanel>
+                    <Border Background="Aqua"  Margin="5">
+                        <TextBlock Text="属性情報" ></TextBlock>
+                    </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"></ColumnDefinition>
+                            <ColumnDefinition Width="1*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                    <ComboBox Height="24" Name="comboBox2"  SelectedIndex="1" SelectionChanged="comboBox2_SelectionChanged">
+                        <ComboBoxItem>単独</ComboBoxItem>
+                        <ComboBoxItem>枠</ComboBoxItem>
+                        <ComboBoxItem>列</ComboBoxItem>
+                    </ComboBox>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
+                            <TextBlock Name="UserCount" ></TextBlock>
+                            <TextBlock Text="人"></TextBlock>
+                            </StackPanel>
+                    </Grid>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="400">
+                        <ItemsControl ItemsSource="{Binding}" >
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="2">
+                                        <TextBlock Text="{Binding GroupName}" Width="50"></TextBlock>
+                                        <ItemsControl ItemsSource="{Binding Data}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel></StackPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border BorderThickness="1" BorderBrush="Gray">
+                                                            <TextBlock Width="80" Text="{Binding AttributeName}"></TextBlock>
+                                                        </Border>
+                                                        <Border BorderThickness="1" BorderBrush="Gray" Width="60">
+                                                            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
+                                                                <TextBlock  Text="{Binding Count}" ></TextBlock>
+                                                                <TextBlock Text="人"></TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <Border BorderThickness="1" BorderBrush="Gray" Width="60">
+                                                            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
+                                                                <TextBlock  Text="{Binding Rate,StringFormat=F2}" ></TextBlock>
+                                                                <TextBlock Text="%"></TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </ContentControl>
     </Grid>
 </UserControl>

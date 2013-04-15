@@ -43,6 +43,36 @@ namespace ClusterViewForSliverlinght.Models
         public int Count { get; set; }
 
 
+        bool deleted = false;
+        [DataMember]
+        public bool Deleted
+        {
+            get { return deleted; }
+            set { deleted = value; }
+        }
+
+        private List<int> userIds = new List<int>();
+        [DataMember]
+        public List<int> UserIds
+        {
+            get { return userIds; }
+            set { userIds = value; }
+        }
+        public Visibility ImageVisibility
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.ImageUrl))
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
+                }
+            }
+        }
+
         private List<ItemRelation> relations = new List<ItemRelation>();
         [DataMember]
         public List<ItemRelation> Relations
@@ -54,6 +84,63 @@ namespace ClusterViewForSliverlinght.Models
         public void AddRelations(TSVLine line)
         {
             relations.Add(new ItemRelation() { ItemId = line.GetIntValue("ITEM2"), 確信度 = line.GetDoubleValue("確信度"), 補正確信度 = line.GetDoubleValue("補正確信度") });
+        }
+
+        private bool selected = false;
+
+        public bool Selected
+        {
+            get { return selected; }
+            set {
+                if (selected != value)
+                {
+                    ChangeSelect();
+                }
+            }
+        }
+
+        public void ChangeSelect()
+        {
+            selected = !selected;
+            if (selected)
+            {
+                this.NewBrush(Colors.Red, 0.8);
+            }
+            else
+            {
+                this.NewBrush(Colors.White, 1);
+            }
+        }
+
+
+        public Visibility Visibility
+        {
+            get
+            {
+                if (MainPage.Mode != MainPage.MouseMode.削除)
+                {
+                    if (deleted)
+                    {
+                       
+                        return System.Windows.Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        return System.Windows.Visibility.Visible;
+                    }
+                }
+                return System.Windows.Visibility.Visible;
+            }
+        }
+
+        public void ChangeDelete()
+        {
+            deleted = !deleted;           
+            OnPropertyChanged("ForeBrush"); 
+        }
+        public void ChaqngeVisibility()
+        {
+            OnPropertyChanged("Visibility");
         }
 
         Brush brush = new SolidColorBrush(Colors.White);
@@ -72,6 +159,23 @@ namespace ClusterViewForSliverlinght.Models
                 color = value;
             }
         }
+
+        public Brush ForeBrush
+        {
+            get
+            {
+                if (deleted)
+                {
+                    return new SolidColorBrush(Colors.Gray);
+                }
+                else
+                {
+                    return new SolidColorBrush(Colors.Black);
+                }
+            }
+        }
+
+
 
         double opacity = 1;
         public double Opacity

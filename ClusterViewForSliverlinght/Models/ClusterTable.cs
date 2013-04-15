@@ -24,6 +24,9 @@ namespace ClusterViewForSliverlinght.Models
         [DataMember]
         public System.Collections.ObjectModel.ObservableCollection<CategoryAttributeGroup> CategoryAttributeGroup { get; set; }
 
+        [DataMember]
+        public Users UserData { get; set; }
+
         public void LeftShift(Category c)
         {
             int postinon = this.Categories.IndexOf(c);
@@ -53,7 +56,7 @@ namespace ClusterViewForSliverlinght.Models
             {
                 int postinon2 = postinon + 1;
                 this.Categories.Remove(c);
-                this.Categories.Insert(postinon, c);
+                this.Categories.Insert(postinon2, c);
                 foreach (var item in LayerGroup)
                 {
                     var tmp = item.Items[postinon];
@@ -83,7 +86,7 @@ namespace ClusterViewForSliverlinght.Models
             ClusterTable ct = (ClusterTable)serializer.ReadObject(stream);
             stream.Close();
             ct.Init();
-            
+
 
             return ct;
         }
@@ -113,23 +116,22 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
-        //private IEnumerable<Comunity> AllComunity
-        //{
-        //    get
-        //    {
-        //        foreach (var item in Categories)
-        //        {
-        //            foreach (var layer in item.Layer.Values)
-        //            {
-        //                foreach (var comunity in layer.Comunities)
-        //                {
-        //                    yield return comunity;
-        //                }
-        //            }
-        //        }
-
-        //    }
-        //}
+        private IEnumerable<Comunity> AllComunity
+        {
+            get
+            {
+                foreach (var item in LayerGroup)
+                {
+                    foreach (var item2 in item.Items)
+                    {
+                        foreach (var item3 in item2.Comunities)
+                        {
+                            yield return item3;
+                        }
+                    }
+                }
+            }
+        }
 
         public void Init()
         {
@@ -152,8 +154,8 @@ namespace ClusterViewForSliverlinght.Models
                 Comunity comunity = new Comunity()
                 {
                     Id = item.GetIntValue("Community_Id"),
-                    Count = item.GetIntValue("User_Idのカウント",0),
-                    //  ImageUrl = item.GetValue("Image_Url"),
+                    Count = item.GetIntValue("User_Idのカウント", 0),
+                    ImageUrl = item.GetValue("Image_Url",string.Empty),
                     //  Index = item.GetDoubleValue("Index"),
                     Name = item.GetValue("Community_Name")
                 };
@@ -305,6 +307,61 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
+        public void AddComunityUserData(System.IO.StreamReader sr)
+        {
+            foreach (var item in comunityDic.Values)
+            {
+                item.UserIds = new List<int>();
+            }
+
+            foreach (var item in TSVFile.ReadLines(sr))
+            {
+                int c_id = item.GetIntValue("Community_Id");
+                int u_id = item.GetIntValue("User_Id");
+                if (comunityDic.ContainsKey(c_id))
+                {
+                    comunityDic[c_id].UserIds.Add(u_id);
+                }
+            }
+        }
+
+        public void AddUserData(System.IO.StreamReader sr)
+        {
+            UserData = new Users();
+            UserData.Create(sr);
+        }
+
+        public IEnumerable<UserAttributeGroup> CreateUserAttributeGroup(IEnumerable<int> userIdList)
+        {
+            if (UserData != null && userIdList != null && userIdList.Any() == true)
+            {
+                Dictionary<string, UserAttributeGroup> userAttributeGroupDic = new Dictionary<string, UserAttributeGroup>();
+                UserData.SetUpData();
+
+                foreach (var item in userIdList.Distinct())
+                {
+                    if (UserData.UserDic.ContainsKey(item))
+                    {
+                        foreach (var item2 in UserData.UserDic[item].AttributeDic)
+                        {
+                            if (userAttributeGroupDic.ContainsKey(item2.Key))
+                            {
+                                userAttributeGroupDic[item2.Key].Add(item2.Value);
+                            }
+                            else
+                            {
+                                userAttributeGroupDic.Add(item2.Key, new UserAttributeGroup() { GroupName = item2.Key });
+                                userAttributeGroupDic[item2.Key].Add(item2.Value);
+                            }
+                        }
+                    }
+                }
+                return userAttributeGroupDic.Values;
+            }
+            return new List<UserAttributeGroup>();
+        }
+
+
         public void ViewRelation(Comunity comunity, int max, RelationIndexType type)
         {
             if (comunityDic == null)
@@ -326,7 +383,8 @@ namespace ClusterViewForSliverlinght.Models
                     if (count > half)
                     {
                         comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.2);
-                    }else
+                    }
+                    else
                     {
                         comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.6);
                     }
@@ -335,8 +393,60 @@ namespace ClusterViewForSliverlinght.Models
             }
 
         }
+        public void ViewRelation(int max, RelationIndexType type)
+        {
+            if (comunityDic == null)
+            {
+                CreateComunityDic();
+            }
+            foreach (var item in comunityDic.Values.Where(n=>n.Selected==false))
+            {
+                item.NewBrush(Colors.White, 1);
+            }
 
-        public void MoveComunity(Comunity comunity,Comunity mouseOver, Layer moveTolayer)
+
+            var selectedList = AllComunity.Where(n => n.Selected == true);
+            List<ItemRelation> relationList = new List<ItemRelation>();
+            foreach (var item in selectedList)
+            {
+                relationList.AddRange(item.Relations.Where(n=>selectedList.Where(m=>m.Id ==n.ItemId).Any()==false)) ;
+            }
+            var d = relationList.GroupBy(n=>n.ItemId).Select(n=>new { n.Key, a = n.Aggregate(1.0,(m,l)=> l.GetIndex(type)*m)});
+
+            int half = max / 2;
+            int count = 0;
+
+            foreach (var item in d.OrderByDescending(n=>n.a).Where(n=>comunityDic.ContainsKey( n.Key)==true).Take(max))
+            {
+                    if (count > half)
+                    {
+                        comunityDic[item.Key].NewBrush(Colors.Orange, 0.2);
+                    }
+                    else
+                    {
+                        comunityDic[item.Key].NewBrush(Colors.Orange, 0.6);
+                    }
+                    count++;
+            }
+
+            //foreach (var item in comunity.Relations.OrderByDescending(n => n.GetIndex(type)).Take(max))
+            //{
+            //    if (comunityDic.ContainsKey(item.ItemId))
+            //    {
+            //        if (count > half)
+            //        {
+            //            comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.2);
+            //        }
+            //        else
+            //        {
+            //            comunityDic[item.ItemId].NewBrush(Colors.Orange, 0.6);
+            //        }
+            //        count++;
+            //    }
+            //}
+
+        }
+        public void MoveComunity(Comunity comunity, Comunity mouseOver, Layer moveTolayer)
         {
             Layer currentLayer = null;
             foreach (var item in this.LayerGroup)
@@ -351,10 +461,11 @@ namespace ClusterViewForSliverlinght.Models
                 }
             }
 
-         //   if (currentLayer != moveTolayer)
+            //   if (currentLayer != moveTolayer)
+            if (currentLayer.Comunities.Contains(comunity))
             {
                 currentLayer.Comunities.Remove(comunity);
-                if (mouseOver !=null && moveTolayer.Comunities.Contains(mouseOver))
+                if (mouseOver != null && moveTolayer.Comunities.Contains(mouseOver))
                 {
                     var p = moveTolayer.Comunities.IndexOf(mouseOver);
                     moveTolayer.Comunities.Insert(p, comunity);
@@ -364,6 +475,92 @@ namespace ClusterViewForSliverlinght.Models
                     moveTolayer.Comunities.Add(comunity);
                 }
             }
+        }
+
+        public void ChangeVisibility()
+        {
+            foreach (var item in AllComunity)
+            {
+                item.ChaqngeVisibility();
+            }
+        }
+        public void AllUnSeleted()
+        {
+            foreach (var item in AllComunity)
+            {
+                item.Selected = false;
+            }
+        }
+
+        public IEnumerable<int> GetUserIdList(Comunity c, string typeText)
+        {
+            if (typeText == "単独")
+            {
+                if (MainPage.Mode == MainPage.MouseMode.選択)
+                {
+                    List<int> list = new List<int>();
+                    foreach (var item in AllComunity.Where(n=>n.Selected==true))
+                    {
+                        list.AddRange(item.UserIds);
+                    }
+                    return list.Distinct();
+                }
+                else
+                {
+                    return c.UserIds;
+                }
+            }
+            else
+            {
+                Layer layer = null;
+                int p = 0;
+                bool flag = false;
+                foreach (var item in LayerGroup)
+                {
+                    p = 0;
+                    foreach (var item2 in item.Items)
+                    {
+                        if (item2.Comunities.Contains(c))
+                        {
+                            layer = item2;
+                            flag = true;
+                            break;
+                        }
+                        p++;
+                    }
+                    if (flag) break;
+                }
+                if (layer == null)
+                {
+                    return new List<int>();
+                }
+                if (typeText == "列")
+                {
+                    List<int> list = new List<int>();
+
+                    foreach (var item in LayerGroup)
+                    {
+                        if (item.Items.Count > p)
+                        {
+                            foreach (var item2 in item.Items.ElementAtOrDefault(p).Comunities.Where(n=>n.Deleted == false))
+                            {
+                                list.AddRange(item2.UserIds);
+                            }
+                        }
+                    }
+                    return list.Distinct();
+                }
+                else
+                {
+                    List<int> list = new List<int>();
+                    foreach (var item in layer.Comunities.Where(n => n.Deleted == false))
+                    {
+                        list.AddRange(item.UserIds);
+                    }
+                    return list.Distinct();
+                }
+            }
+
         }
 
     }

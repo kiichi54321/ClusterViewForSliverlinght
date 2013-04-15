@@ -84,6 +84,7 @@
     <Compile Include="Models\ClusterTable.cs" />
     <Compile Include="Models\Comunity.cs" />
     <Compile Include="Models\Layer.cs" />
+    <Compile Include="Models\User.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
