@@ -4,9 +4,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:tool="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Toolkit"
+    xmlns:toolInput="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Input.Toolkit"
     xmlns:Lib="clr-namespace:ClusterViewForSliverlinght.Lib"
+    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+    xmlns:ei="clr-namespace:Microsoft.Expression.Interactivity.Core;assembly=Microsoft.Expression.Interactions"
+
     mc:Ignorable="d"
-    d:DesignHeight="438" d:DesignWidth="842">
+    d:DesignHeight="538" d:DesignWidth="1057" xmlns:sdk="http://schemas.microsoft.com/winfx/2006/xaml/presentation/sdk">
     <UserControl.Resources>
         <Lib:BooleanToHiddenVisibility x:Key="boolToVis"/>
     </UserControl.Resources>
@@ -16,18 +20,22 @@
             <ColumnDefinition Width="120" />
             <ColumnDefinition Width="120" />
             <ColumnDefinition Width="282*" />
-            <ColumnDefinition Width="300" />
+
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="32" />
             <RowDefinition Height="382*" />
-            <RowDefinition Height="32" />
+
         </Grid.RowDefinitions>
         <Border  Padding="5">
-            <TextBlock Text="クラスターテーブル" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"></TextBlock>
+            <TextBlock Text="こうぞうくん" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"></TextBlock>
         </Border>
         <Button Grid.Column="1" Margin="5" Content="ファイル関係" Click="Button_Click_1"></Button>
         <Button Grid.Column="2" Margin="5" Content="表示設定" Click="Button_Click_2"></Button>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Name="VersionBlock"  Grid.Column="3" Grid.ColumnSpan="2">
+            <TextBlock Text="Ver."></TextBlock>
+            <TextBlock Text="{Binding Version}"></TextBlock>
+        </StackPanel>
         <StackPanel Name="stackPanel1" Orientation="Horizontal"  Grid.Column="3" Grid.ColumnSpan="2">
 
             <ComboBox Height="24" Name="comboBox1" Width="100" SelectedIndex="1">
@@ -37,172 +45,455 @@
             <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="関係の数" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-                    <Slider Name="RelationCountSlider" Width="100" Maximum="20" Minimum="1" LargeChange="5" SmallChange="1" Value="10" />
+                    <Slider Name="RelationCountSlider" Width="100" Maximum="30" Minimum="1" LargeChange="5" SmallChange="1" Value="20" />
                     <TextBlock Text="{Binding ElementName=RelationCountSlider,Path=Value, StringFormat=F0}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                     <TextBlock Text="個" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                 </StackPanel>
             </Border>
             <TextBlock Text="モード" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-            <ComboBox Height="24" Name="modeComboBox" Width="70" SelectedIndex="1"  SelectionChanged="modeComboBox_SelectionChanged">
+            <ComboBox Height="24" Name="modeComboBox" Width="80" SelectedIndex="0"  SelectionChanged="modeComboBox_SelectionChanged">
                 <ComboBoxItem>選択</ComboBoxItem>
+                <ComboBoxItem>複数選択</ComboBoxItem>
                 <ComboBoxItem>移動</ComboBoxItem>
                 <ComboBoxItem>削除</ComboBoxItem>
             </ComboBox>
+            <CheckBox Name="LockModeCheckBox" Content="Lockモード" VerticalContentAlignment="Center" VerticalAlignment="Center"></CheckBox>
+            <Button Content="クラスタリング" Height="23" Name="ClusteringButton" Click="ClusteringButton_Click" Visibility="Collapsed"></Button>
+            <Button Content="ヘルプ" Height="23" Name="button8" Width="75" Click="button8_Click" />
         </StackPanel>
-        <ScrollViewer Grid.Row="1" Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="5" >
-            <ContentControl Name="ClusterTableView">
-                <StackPanel >
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
-                        <ItemsControl ItemsSource="{Binding Categories}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"></StackPanel>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="20"></ColumnDefinition>
-                                                <ColumnDefinition Width="*"></ColumnDefinition>
-                                                <ColumnDefinition Width="20"></ColumnDefinition>
-                                            </Grid.ColumnDefinitions>
-                                            <Button Content="＜" FontWeight="Bold" Tag="{Binding}" Click="LeftButton_Click"></Button>
-                                            <Button Grid.Column="2" Content="＞" FontWeight="Bold" Tag="{Binding}" Click="RightButton_Click"></Button>
-                                            <TextBox Text="{Binding Name,Mode=TwoWay}" Grid.Column="1" ></TextBox>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
 
-                    <ItemsControl ItemsSource="{Binding CategoryAttributeGroup}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel></StackPanel>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Border>
-                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
-                                    </Border>
-                                    <ItemsControl ItemsSource="{Binding Items}" Tag="{Binding Items}" >
+        <sdk:TabControl Grid.Row="1" Name="tabControl1" Grid.ColumnSpan="5" TabStripPlacement="Bottom">
+            <sdk:TabItem Header="クラスタテーブル" Name="tabItem1">
+                <Grid >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="250"></ColumnDefinition>
+                        <ColumnDefinition Width="624*" />
+                        <ColumnDefinition Width="300" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="349*" />
+                        <RowDefinition Height="30" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer  Name="scrollViewer1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="3" >
+
+                        <ContentControl Name="ClusterTableView">
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel >
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
+                                        <ItemsControl ItemsSource="{Binding Categories}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="20"></ColumnDefinition>
+                                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                                                <ColumnDefinition Width="20"></ColumnDefinition>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Button Content="＜" FontWeight="Bold" Tag="{Binding}" Click="LeftButton_Click"></Button>
+                                                            <Button Grid.Column="2" Content="＞" FontWeight="Bold" Tag="{Binding}" Click="RightButton_Click"></Button>
+                                                            <TextBox Text="{Binding Name,Mode=TwoWay}" Grid.Column="1" ></TextBox>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <ItemsControl ItemsSource="{Binding CategoryAttributeGroup}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" ></StackPanel>
+                                                <StackPanel></StackPanel>
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}"  Padding="2">
-                                                    <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-                                                </Border>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border>
+                                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
+                                                    </Border>
+                                                    <ItemsControl ItemsSource="{Binding Items}" Tag="{Binding Items}" >
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal" ></StackPanel>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}"  Padding="2">
+                                                                    <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
 
-                    <ItemsControl ItemsSource="{Binding LayerGroup}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel></StackPanel>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Border>
-                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
-                                    </Border>
-                                    <ItemsControl ItemsSource="{Binding Items}">
+                                    <ItemsControl ItemsSource="{Binding LayerGroup}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"></StackPanel>
+                                                <StackPanel></StackPanel>
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border>
+                                                        <TextBlock Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}" Text="{Binding Name}"></TextBlock>
+                                                    </Border>
+                                                    <ItemsControl ItemsSource="{Binding Items}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal"></StackPanel>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
 
-                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" MinHeight="20" BorderBrush="Black" BorderThickness="1" Padding="2" Tag="{Binding}" MouseEnter="ItemsControl_MouseEnter" MouseLeave="ItemsControl_MouseLeave" MouseLeftButtonUp="ItemsControl_MouseLeftButtonUp" Background="White">
+                                                                <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" MinHeight="20" BorderBrush="Black" BorderThickness="1" Padding="2" Tag="{Binding}" MouseEnter="ItemsControl_MouseEnter" MouseLeave="ItemsControl_MouseLeave" MouseLeftButtonUp="ItemsControl_MouseLeftButtonUp" Background="{Binding Brush,Mode=TwoWay}">
 
-                                                    <ScrollViewer MaxHeight="{Binding Path=Value,ElementName=MaxHeightSlider,Mode=TwoWay}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                                        <ItemsControl ItemsSource="{Binding Comunities}" >
-                                                            <ItemsControl.ItemsPanel>
-                                                                <ItemsPanelTemplate>
-                                                                    <StackPanel ></StackPanel>
-                                                                </ItemsPanelTemplate>
-                                                            </ItemsControl.ItemsPanel>
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <Border Background="{Binding Brush}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown" MouseEnter="TextBlock_MouseEnter" MouseLeave="Border_MouseLeave"  Visibility="{Binding Visibility}">
-                                                                        <StackPanel Orientation="Horizontal">
-                                                                            <ToolTipService.ToolTip>
-                                                                                <Image Source="{Binding ImageUrl}" Visibility="{Binding ImageVisibility}"></Image>
-                                                                            </ToolTipService.ToolTip>
-                                                                            <TextBlock Text="{Binding Name}" Foreground="{Binding ForeBrush}" ></TextBlock>
-                                                                            <TextBlock Text="(" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
-                                                                            <TextBlock Text="{Binding Count}" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
-                                                                            <TextBlock Text=")" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                    <ScrollViewer MaxHeight="{Binding Path=Value,ElementName=MaxHeightSlider,Mode=TwoWay}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                                                        <ItemsControl ItemsSource="{Binding Comunities}" >
+                                                                            <ItemsControl.ItemsPanel>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <StackPanel ></StackPanel>
+                                                                                </ItemsPanelTemplate>
+                                                                            </ItemsControl.ItemsPanel>
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <Border Background="{Binding Brush}" Tag="{Binding}" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown" MouseEnter="TextBlock_MouseEnter" MouseLeave="Border_MouseLeave"  Visibility="{Binding Visibility}">
+                                                                                        <StackPanel Orientation="Horizontal">
+                                                                                            <ToolTipService.ToolTip>
+                                                                                                <Image Source="{Binding ImageUrl}" Visibility="{Binding ImageVisibility}"></Image>
+                                                                                            </ToolTipService.ToolTip>
+                                                                                            <TextBlock Text="{Binding IsHubText,Mode=TwoWay}" Foreground="Red" Visibility="{Binding Path=IsChecked, ElementName=HubViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                                            <CheckBox IsChecked="{Binding Lock,Mode=TwoWay}" Visibility="{Binding Path=IsChecked, ElementName=LockModeCheckBox, Converter={StaticResource boolToVis}}"></CheckBox>
+                                                                                            <TextBlock Text="{Binding Name}" Foreground="{Binding ForeBrush}" ></TextBlock>
+                                                                                            <TextBlock Text="(" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                                            <TextBlock Text="{Binding Count}" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                                            <TextBlock Text=")" Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}"></TextBlock>
+                                                                                        </StackPanel>
+                                                                                    </Border>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </ScrollViewer>
+
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Name="CountPanel"  Visibility="{Binding Path=IsChecked, ElementName=CountViewCheckBox, Converter={StaticResource boolToVis}}">
+                                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}">
+                                            <TextBlock Text="Count" VerticalAlignment="Center"></TextBlock>
+                                        </Border>
+
+                                        <ItemsControl ItemsSource="{Binding Categories}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2" BorderBrush="Black" BorderThickness="1">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Count}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock Text="("/>
+                                                                <TextBlock Text="{Binding Rate,StringFormat=F2}"/>
+                                                                <TextBlock Text="%)"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Name="originalClassNamePanel"  Visibility="{Binding Path=IsChecked, ElementName=OrignalClassNameViewCheckBox, Converter={StaticResource boolToVis}}">
+                                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
+
+                                        <ItemsControl ItemsSource="{Binding Categories}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
+                                                        <Grid>
+                                                            <TextBlock Text="{Binding KeyName}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Name="deleteButtonPanel" >
+                                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
+
+                                        <ItemsControl ItemsSource="{Binding Categories}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
+                                                            <Button Visibility="{Binding DeleteButtonVisibility}" Name="CategoryDeleteButton" Tag="{Binding}" Click="CategoryDeleteButton_Click" Content="×" ></Button>
+                                                        </Border>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Content="▶" Name="AddCategoryButton" Click="AddCategoryButton_Click"></Button>
+                            </StackPanel>
+                        </ContentControl>
+
+                    </ScrollViewer>
+                    <Button Content="クラスタリング関係" Grid.Row="1" Margin="5" Click="Button_Click_9"></Button>
+                    <!--クラスタリング関係-->
+                    <Border Name="ClusteringPanel"  Background="White" BorderThickness="1" BorderBrush="Black" VerticalAlignment="Bottom" Margin="3">
+                        <StackPanel  >
+                            <Button Content="レイヤー別けデータの読み込み"  Click="Button_Click_10"></Button>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="クラスタ数:"></TextBlock>
+                                <TextBlock Text="{Binding ElementName=ClusterNumSlider,Path=Value,StringFormat=F0}"></TextBlock>
+                                <Slider Minimum="1" Maximum="20" Value="6" Name="ClusterNumSlider" Width="100"></Slider>
+                            </StackPanel>
+                            <Button Content="Userコミュニティ読み込み"  Click="Button_Click_11"></Button>
+                            <Button Content="User属性読み込み" Height="23" Name="button6"  Click="button6_Click" />
+                            <StackPanel Name="ClusteringSettingPanel">
+                                <TextBlock Text="クラスタリングの設定"></TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="試行個数" Width="100"></TextBlock>
+                                    <toolInput:NumericUpDown  Value="{Binding TryCount,Mode=TwoWay}" Maximum="100" Minimum="1"></toolInput:NumericUpDown>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Visibility="Collapsed">
+                                    <TextBlock Text="合議個数" Width="100"></TextBlock>
+                                    <toolInput:NumericUpDown  Value="{Binding WideCount,Mode=TwoWay}" Maximum="100" Minimum="1"></toolInput:NumericUpDown>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="選択関係数" Width="100"></TextBlock>
+                                    <toolInput:NumericUpDown Value="{Binding TakeComunity,Mode=TwoWay}" Maximum="100" Minimum="1"></toolInput:NumericUpDown>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"  Visibility="Collapsed">
+                                    <TextBlock Text="カテゴリ内の期待数" Width="100"></TextBlock>
+                                    <toolInput:NumericUpDown Value="{Binding MinCategoryComunityCount,Mode=TwoWay}" Maximum="100" Minimum="1"></toolInput:NumericUpDown>
+                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Content="クラスタリング" Command="{Binding RunClustering}"></Button>
+                                    <Button Content="結果のクリア" Grid.Column="1" Command="{Binding ResultClear}"></Button>
+                                </Grid>
+                                <ProgressBar Height="20" Value="{Binding Progress,Mode=TwoWay}"></ProgressBar>
+                                <ComboBox Name="clusteringResultcomboBox" ItemsSource="{Binding Results,Mode=TwoWay}" SelectedItem="{Binding SeletectedResult,Mode=TwoWay}" DisplayMemberPath="ViewText">
+                                  <!--  <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="SelectionChanged">
+                                            <i:InvokeCommandAction Command="{Binding ChangeClusteringResult}"
+                                       CommandParameter="{Binding SelectedItems, ElementName=clusteringResultcomboBox}"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                    -->
+                                </ComboBox>
+                                <TextBox Name="ClusteringRepotTextBox" Height="100" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Text="{Binding ReportText,Mode=TwoWay}"></TextBox>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </Border>
+                    <!--ユーザ属性関係 -->
+
+                    <StackPanel Grid.Column="2" Grid.Row="2" Orientation="Horizontal">
+                        <Button Content="属性情報"  Name="button5" Margin="5"  Click="button5_Click"/>
+                        <Button Content="共起関係" Margin="5" Click="Button_Click_3"></Button>
+                    </StackPanel>
+                    <ContentControl Name="AttributeContentControl"  Grid.Column="2" Grid.Row="0" VerticalAlignment="Bottom" Visibility="Collapsed"  HorizontalAlignment="Right">
+                        <Border BorderThickness="1" Background="White" BorderBrush="Black">
+                            <StackPanel>
+                                <Border Background="Aqua"  Margin="5">
+                                    <TextBlock Text="属性情報" ></TextBlock>
+                                </Border>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ComboBox Height="24" Name="comboBox2"  SelectedIndex="1" SelectionChanged="comboBox2_SelectionChanged">
+                                            <ComboBoxItem>選択</ComboBoxItem>
+                                            <ComboBoxItem>枠</ComboBoxItem>
+                                            <ComboBoxItem>列</ComboBoxItem>
+                                        </ComboBox>
+                                        <ComboBox Height="24" Name="attributeSortComboBox3"  SelectedIndex="1" >
+                                            <ComboBoxItem>名前順</ComboBoxItem>
+                                            <ComboBoxItem>カウント順</ComboBoxItem>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
+                                        <TextBlock Name="UserCount" ></TextBlock>
+                                        <TextBlock Text="人"></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="500">
+                                    <ItemsControl ItemsSource="{Binding}" >
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel></StackPanel>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="2">
+
+                                                    <CheckBox IsChecked="{Binding Visible,Mode= TwoWay}"></CheckBox>
+                                                    <TextBlock Text="{Binding GroupName}" Width="50"></TextBlock>
+
+
+                                                    <ItemsControl ItemsSource="{Binding Data}" Visibility="{Binding Visibility}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel></StackPanel>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Button Width="10" Tag="{Binding}" Name="AttributeViewButton" Click="AttributeViewButton_Click" Background="{Binding ButtonBrush,Mode=TwoWay}"></Button>
+                                                                    <Border BorderThickness="1" BorderBrush="Gray">
+                                                                        <TextBlock Width="80" Text="{Binding AttributeName}"></TextBlock>
+                                                                    </Border>
+                                                                    <Border BorderThickness="1" BorderBrush="Gray" Width="60">
+                                                                        <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
+                                                                            <TextBlock  Text="{Binding Count}" ></TextBlock>
+                                                                            <TextBlock Text="人"></TextBlock>
                                                                         </StackPanel>
                                                                     </Border>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </ScrollViewer>
-
-                                                </Border>
+                                                                    <Border BorderThickness="1" BorderBrush="Gray" Width="60">
+                                                                        <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
+                                                                            <TextBlock  Text="{Binding Rate,StringFormat=F2}" ></TextBlock>
+                                                                            <TextBlock Text="%"></TextBlock>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <StackPanel Orientation="Horizontal">
-                        <Border Width="{Binding Path=Value,ElementName=MaxHeaderWidthSlider,Mode=TwoWay}"></Border>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                    </ContentControl>
+                    <ContentControl Name="RelationContentControl"  Grid.Column="2" Grid.Row="0" VerticalAlignment="Bottom"   Visibility="Collapsed" HorizontalAlignment="Right">
+                        <sdk:DataGrid AutoGenerateColumns="True"  Name="RelationDataGrid"  />
 
-                        <ItemsControl ItemsSource="{Binding Categories}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"></StackPanel>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="{Binding Path=Value,ElementName=MaxWidthSlider,Mode=TwoWay}" Padding="2">
-                                        <Grid>
-                                            <TextBlock Text="{Binding KeyName}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                    </ContentControl>
+
+
+                </Grid>
+            </sdk:TabItem>
+            <sdk:TabItem Header="クラスタマップ" Name="tabItem2">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="500*" MinWidth="100" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="300*" MinWidth="100" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28" />
+                        <RowDefinition Height="350*" />
+                    </Grid.RowDefinitions>
+                    <sdk:GridSplitter  Name="gridSplitter1" Grid.Column="1" Grid.Row="1" VerticalAlignment="Stretch"  />
+                    <sdk:DataGrid Grid.Row="2" Grid.Column="2"  Name="relationViewDataGrid" AutoGenerateColumns="False" VerticalScrollBarVisibility="Visible">
+                        <sdk:DataGrid.Columns>
+                            <sdk:DataGridTextColumn CanUserReorder="True" CanUserResize="True" CanUserSort="True" Width="Auto" Header="NameA" Binding="{Binding NameA}"  />
+                            <sdk:DataGridTextColumn CanUserReorder="True" CanUserResize="True" CanUserSort="True" Width="Auto" Header="NameB" Binding="{Binding NameB}" />
+                            <sdk:DataGridTextColumn CanUserReorder="True" CanUserResize="True" CanUserSort="True" Width="Auto" Header="Jaccard" Binding="{Binding Jaccard,StringFormat=F3}" />
+                            <sdk:DataGridTextColumn CanUserReorder="True" CanUserResize="True" CanUserSort="True" Width="Auto" Header="信頼度比" Binding="{Binding 信頼度比,StringFormat=F3}"  >
+                            </sdk:DataGridTextColumn>
+
+                        </sdk:DataGrid.Columns>
+                    </sdk:DataGrid>
+                    <Canvas Grid.Row="1" Name="canvas1" >
+
+                    </Canvas>
+                    <StackPanel Name="stackPanel2" Orientation="Horizontal" Grid.ColumnSpan="3">
+                        <Button Width="80" Content="作成" Margin="3" Click="Button_Click_4"></Button>
+                        <TextBlock Text="足切りのLift値" VerticalAlignment="Center"></TextBlock>
+                        <toolInput:NumericUpDown Name="minLeftNumericUpDown" Value="1.15" Maximum="10" DecimalPlaces="2" Increment="0.01" ValueChanged="minLeftNumericUpDown_ValueChanged"></toolInput:NumericUpDown>
+
+                        <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="リンクの数" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <Slider Name="RelationCountSlider2" Width="100" Maximum="40" Minimum="1" LargeChange="3" SmallChange="1" Value="10" ValueChanged="RelationCountSlider2_ValueChanged" />
+                                <TextBlock Text="{Binding ElementName=RelationCountSlider2,Path=Value, StringFormat=F0}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="個" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <Button Content="-" Width="20" Click="Button_Click_6"></Button>
+                                <Button Content="+" Width="20" Click="Button_Click_7"></Button>
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="2" BorderThickness="1" BorderBrush="Black" Padding="2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="自動モード" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <Button Name="autoButton" Content="開始" Click="Button_Click_8"></Button>
+                                <Slider Name="TimeSlider" Width="50" Maximum="5" Minimum="0.5" LargeChange="3" SmallChange="1" Value="2" Margin="2,0" />
+                                <TextBlock Text="{Binding ElementName=TimeSlider,Path=Value, StringFormat=F1}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="秒" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+
+                            </StackPanel>
+                        </Border>
+                        <Button Content="バネ調整" Margin="3" Click="Button_Click_5"></Button>
+                        <Button Content="数値表示On/Off" Height="23" Name="button4" Width="100" Click="button4_Click_1" />
+                        <Button Content="AllData" Height="23" Name="button9" Width="75" Click="button9_Click" />
+                        <Button Content="印刷" Height="23" Name="printButton" Width="75" Click="printButton_Click" />
                     </StackPanel>
 
-                </StackPanel>
-            </ContentControl>
-        </ScrollViewer>
+                </Grid>
+            </sdk:TabItem>
+        </sdk:TabControl>
+
+
         <!--メニュー関係開始 -->
         <!--ファイル関係 -->
         <StackPanel Grid.Column="1" Grid.Row="1" Name="FilePanel" Visibility="Collapsed" Grid.RowSpan="2">
             <Border BorderThickness="1" BorderBrush="Black" Background="White">
                 <StackPanel Background="White">
+                    <!--
                     <Button Content="Tableファイル読み込み" Height="24" Name="button1"  Click="button1_Click" Margin="2" />
-                    <Button Content="関係ファイル読み込み" Height="23" Name="button4"  Click="button4_Click" Margin="2" />
-                    <Button Content="User属性読み込み" Height="23" Name="button6"  Click="button6_Click" Margin="2" />
                     <Button Content="Userコミュニティ読み込み" Height="23" Name="button7"  Click="button7_Click" Margin="2" />
+                   
+                    <Button Content="User属性読み込み" Height="23" Name="button6"  Click="button6_Click" Margin="2" />
+                     -->
                     <Border Height="2"></Border>
                     <Button Content="保存" Height="23" Name="button2"  Click="button2_Click" Margin="2" />
                     <Button Content="読み込み" Height="23" Name="button3" Click="button3_Click" Margin="2" />
-                    
+                    <Button Content="サンプル1" Name="sample1Buntton" Height="23" Margin="2" ToolTipService.ToolTip="半沢直樹公式アカウントをフォローしているユーザのツイートデータ" Click="sample1Buntton_Click">
+                        
+                    </Button>
+                    <Button Content="サンプル2" Height="23" Margin="2" Name="sample2Buntton" Visibility="Collapsed" ToolTipService.ToolTip="ブラウザ三国志のミクシーのコミュニティに所属する人のデータ" Click="sample2Buntton_Click"></Button>
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -223,79 +514,42 @@
                         <Slider Name="MaxHeaderWidthSlider" Width="60" Maximum="150" Minimum="10" LargeChange="20" SmallChange="10" Value="50" />
                     </StackPanel>
                     <CheckBox Content="カウントの表示" Name="CountViewCheckBox" Margin="2"></CheckBox>
+                    <CheckBox Content="元のクラス名表示" Name="OrignalClassNameViewCheckBox" Margin="2"></CheckBox>
+                    <CheckBox Content="ハブの表示" Name="HubViewCheckBox" Margin="2"></CheckBox>
                 </StackPanel>
             </Border>
         </StackPanel>
-        <!--ユーザ属性関係 -->
 
-        <Button Content="属性情報"  Name="button5" Margin="5" Grid.Column="4" Grid.Row="2" Click="button5_Click"/>
-        <ContentControl Name="AttributeContentControl"  Grid.Column="4" Grid.Row="1" VerticalAlignment="Bottom"   Visibility="Collapsed" HorizontalAlignment="Right">
-            <Border BorderThickness="1" Background="White" BorderBrush="Black">
-                <StackPanel>
-                    <Border Background="Aqua"  Margin="5">
-                        <TextBlock Text="属性情報" ></TextBlock>
-                    </Border>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1*"></ColumnDefinition>
-                            <ColumnDefinition Width="1*"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                    <ComboBox Height="24" Name="comboBox2"  SelectedIndex="1" SelectionChanged="comboBox2_SelectionChanged">
-                        <ComboBoxItem>単独</ComboBoxItem>
-                        <ComboBoxItem>枠</ComboBoxItem>
-                        <ComboBoxItem>列</ComboBoxItem>
-                    </ComboBox>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
-                            <TextBlock Name="UserCount" ></TextBlock>
-                            <TextBlock Text="人"></TextBlock>
-                            </StackPanel>
-                    </Grid>
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="400">
-                        <ItemsControl ItemsSource="{Binding}" >
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel></StackPanel>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="2">
-                                        <TextBlock Text="{Binding GroupName}" Width="50"></TextBlock>
-                                        <ItemsControl ItemsSource="{Binding Data}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel></StackPanel>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border BorderThickness="1" BorderBrush="Gray">
-                                                            <TextBlock Width="80" Text="{Binding AttributeName}"></TextBlock>
-                                                        </Border>
-                                                        <Border BorderThickness="1" BorderBrush="Gray" Width="60">
-                                                            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
-                                                                <TextBlock  Text="{Binding Count}" ></TextBlock>
-                                                                <TextBlock Text="人"></TextBlock>
-                                                            </StackPanel>
-                                                        </Border>
-                                                        <Border BorderThickness="1" BorderBrush="Gray" Width="60">
-                                                            <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
-                                                                <TextBlock  Text="{Binding Rate,StringFormat=F2}" ></TextBlock>
-                                                                <TextBlock Text="%"></TextBlock>
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+
+        <Grid Grid.ColumnSpan="5"  Grid.Row="1" Name="HelpPanel" Visibility="Collapsed">
+            <Grid Width="600" Height="400">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"></RowDefinition>
+                    <RowDefinition Height="30*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Border Background="#FF869DFF">
+                    <TextBlock Text="ヘルプ" FontSize="20"></TextBlock>
+                </Border>
+               
+                <StackPanel Grid.Row="1">
+                    
                 </StackPanel>
-            </Border>
-        </ContentControl>
+
+                <!--
+                <sdk:TabControl Grid.Row="1" Name="tabControl1">
+                    <sdk:TabItem Header="初めに" Name="tabItem1">
+                        <Grid />
+                    </sdk:TabItem>
+                    <sdk:TabItem Header="ファイルの入力形式" >
+                        <Grid />
+                    </sdk:TabItem>
+                    <sdk:TabItem Header="ファイルの入力形式" >
+                        <Grid />
+                    </sdk:TabItem>
+
+                </sdk:TabControl>
+                -->
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

@@ -23,9 +23,11 @@ namespace ClusterViewForSliverlinght.Models
         public List<LayerGroup> LayerGroup { get; set; }
         [DataMember]
         public System.Collections.ObjectModel.ObservableCollection<CategoryAttributeGroup> CategoryAttributeGroup { get; set; }
-
         [DataMember]
         public Users UserData { get; set; }
+
+
+        #region Shift
 
         public void LeftShift(Category c)
         {
@@ -41,12 +43,14 @@ namespace ClusterViewForSliverlinght.Models
                     item.Items.RemoveAt(postinon);
                     item.Items.Insert(postinon2, tmp);
                 }
-                foreach (var item in CategoryAttributeGroup)
-                {
-                    var tmp = item.Items[postinon];
-                    item.Items.RemoveAt(postinon);
-                    item.Items.Insert(postinon2, tmp);
-                }
+                //カテゴリの追加時にバグる
+                //foreach (var item in CategoryAttributeGroup)
+                //{
+                //    var tmp = item.Items[postinon];
+                //    item.Items.RemoveAt(postinon);
+                //    item.Items.Insert(postinon2, tmp);
+                //}
+
             }
         }
         public void RightShift(Category c)
@@ -63,15 +67,17 @@ namespace ClusterViewForSliverlinght.Models
                     item.Items.RemoveAt(postinon);
                     item.Items.Insert(postinon2, tmp);
                 }
-                foreach (var item in CategoryAttributeGroup)
-                {
-                    var tmp = item.Items[postinon];
-                    item.Items.RemoveAt(postinon);
-                    item.Items.Insert(postinon2, tmp);
-                }
+                //カテゴリの追加時にバグる
+                //foreach (var item in CategoryAttributeGroup)
+                //{
+                //    var tmp = item.Items[postinon];
+                //    item.Items.RemoveAt(postinon);
+                //    item.Items.Insert(postinon2, tmp);
+                //}
             }
 
         }
+        #endregion
 
         #region SaveLoad
         public void Save(System.IO.Stream stream)
@@ -94,6 +100,12 @@ namespace ClusterViewForSliverlinght.Models
         #endregion
 
         Dictionary<int, Comunity> comunityDic;
+
+        public Dictionary<int, Comunity> ComunityDic
+        {
+            get { return comunityDic; }
+            set { comunityDic = value; }
+        }
         void CreateComunityDic()
         {
             if (comunityDic == null)
@@ -101,11 +113,11 @@ namespace ClusterViewForSliverlinght.Models
                 comunityDic = new Dictionary<int, Comunity>();
             }
             comunityDic.Clear();
-            foreach (var item in LayerGroup)
+            foreach (var item in Categories)
             {
-                foreach (var layer in item.Items)
+                foreach (var item2 in item.Layer)
                 {
-                    foreach (var comunity in layer.Comunities)
+                    foreach (var comunity in item2.Value.Comunities)
                     {
                         if (comunityDic.ContainsKey(comunity.Id) == false)
                         {
@@ -116,7 +128,7 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
-        private IEnumerable<Comunity> AllComunity
+        public IEnumerable<Comunity> AllComunity
         {
             get
             {
@@ -132,30 +144,68 @@ namespace ClusterViewForSliverlinght.Models
                 }
             }
         }
+        public void SetAllUser()
+        {
+            List<int> userList = new List<int>();
+            foreach (var item in AllComunity)
+            {
+                if (item.Deleted == false && item.UserIds != null)
+                {
+                    userList.AddRange(item.UserIds);
+                }
+            }
+            var all = userList.Distinct().Count();
+
+            foreach (var item in Categories)
+            {
+                item.AllUser = all;
+            }
+        }
+
 
         public void Init()
         {
             CreateComunityDic();
+            CreateLayerGroup(this);
+            foreach (var item in Categories)
+            {
+                item.Init();
+            }
             foreach (var item in comunityDic.Values)
             {
                 item.Init();
             }
+            SetAllUser();
+
         }
 
-        public static ClusterTable Create(System.IO.StreamReader sr)
+        public void ChangeColorByAttribute(string attributeName, string value)
+        {
+            var baseRate = UserData.GetRate(attributeName, value, this.UserData.UserList.Select(n => n.Id));
+
+            foreach (var item in LayerGroup)
+            {
+                foreach (var item2 in item.Items)
+                {
+                    item2.ChangeAttributeColor(UserData, attributeName, value, baseRate);
+                }
+            }
+        }
+
+        public static ClusterTable Create(System.IO.StreamReader sr, out IEnumerable<string> errList)
         {
             Dictionary<string, Category> categoryDic = new Dictionary<string, Category>();
             Dictionary<string, List<Layer>> layerListDic = new Dictionary<string, List<Layer>>();
             List<Comunity> comunityList = new List<Comunity>();
 
 
-            foreach (var item in TSVFile.ReadLines(sr))
+            foreach (var item in TSVFile.ReadLines(sr, out errList))
             {
                 Comunity comunity = new Comunity()
                 {
                     Id = item.GetIntValue("Community_Id"),
-                    Count = item.GetIntValue("User_Idのカウント", 0),
-                    ImageUrl = item.GetValue("Image_Url",string.Empty),
+                //    Count = item.GetIntValue("User_Idのカウント", 0),
+                    ImageUrl = item.GetValue("Image_Url", string.Empty),
                     //  Index = item.GetDoubleValue("Index"),
                     Name = item.GetValue("Community_Name")
                 };
@@ -269,15 +319,21 @@ namespace ClusterViewForSliverlinght.Models
                 clusterTable.CategoryAttributeGroup.Add(item2);
             }
 
-            foreach (var item in layerNameList)
-            {
-                var lg = new LayerGroup() { Name = item, Items = new System.Collections.ObjectModel.ObservableCollection<Layer>() };
-                clusterTable.LayerGroup.Add(lg);
-                foreach (var item2 in categoryDic.Values)
-                {
-                    lg.Items.Add(item2.Layer[item]);
-                }
-            }
+            CreateLayerGroup(clusterTable);
+
+            //foreach (var item in layerNameList)
+            //{
+            //    var lg = new LayerGroup() { Name = item, Items = new System.Collections.ObjectModel.ObservableCollection<Layer>() };
+            //    clusterTable.LayerGroup.Add(lg);
+            //    foreach (var item2 in categoryDic.Values)
+            //    {
+            //        if (item2.Layer.ContainsKey(item)==false)
+            //        {
+            //            item2.Layer.Add(item, new Layer());
+            //        }
+            //        lg.Items.Add(item2.Layer[item]);
+            //    }
+            //}
 
             comunityList.Clear();
             foreach (var item in layerListDic.Values)
@@ -287,19 +343,74 @@ namespace ClusterViewForSliverlinght.Models
                     comunityList.AddRange(item2.Comunities);
                 }
             }
+            clusterTable.CreateRelation();
             return clusterTable;
         }
 
-        public void AddRelationData(System.IO.StreamReader sr)
+        public static void CreateLayerGroup(ClusterTable clusterTable)
+        {
+            clusterTable.LayerGroup = new List<LayerGroup>();
+            List<string> layerNameList = new List<string>();
+            foreach (var item in clusterTable.Categories)
+            {
+                foreach (var item2 in item.Layer)
+                {
+                    layerNameList.Add(item2.Value.Name);
+                }
+            }
+            layerNameList = layerNameList.Where(n => n != null).Distinct().OrderBy(n => n).ToList();
+            foreach (var item in layerNameList)
+            {
+                var lg = new LayerGroup() { Name = item, Items = new System.Collections.ObjectModel.ObservableCollection<Layer>() };
+                clusterTable.LayerGroup.Add(lg);
+                foreach (var item2 in clusterTable.Categories)
+                {
+                    if (item2.Layer.ContainsKey(item) == false)
+                    {
+                        item2.Layer.Add(item, new Layer());
+                    }
+                    lg.Items.Add(item2.Layer[item]);
+                }
+            }
+
+        }
+
+        public void ReadCominityLayerData(System.IO.StreamReader sr, int clusterNum, out IEnumerable<string> errList)
+        {
+            if (Categories == null) Categories = new System.Collections.ObjectModel.ObservableCollection<Category>();
+            Categories.Clear();
+            for (int i = 0; i < clusterNum; i++)
+            {
+                Categories.Add(new Category() { KeyName = "C_" + i });
+            }
+            this.CategoryAttributeGroup = new System.Collections.ObjectModel.ObservableCollection<Models.CategoryAttributeGroup>();
+            Random random = new Random();
+            foreach (var item in TSVFile.ReadLines(sr, out errList))
+            {
+                Comunity comunity = new Comunity()
+                {
+                    Id = item.GetIntValue("Community_Id"),
+                    ImageUrl = item.GetValue("Image_Url", string.Empty),
+                    Name = item.GetValue("Community_Name")
+                };
+                string layer = item.GetValue("レイヤー");
+                var r = random.Next(clusterNum);
+                Categories[r].GetLayer(layer).Comunities.Add(comunity);
+            }
+            CreateLayerGroup(this);
+        }
+
+
+        public void AddRelationData(System.IO.StreamReader sr, out IEnumerable<string> errList)
         {
             CreateComunityDic();
             foreach (var item in comunityDic.Values)
             {
                 item.Relations.Clear();
             }
-            foreach (var item in TSVFile.ReadLines(sr))
+            foreach (var item in TSVFile.ReadLines(sr, out errList))
             {
-                var id = item.GetIntValue("ITEM1");
+                var id = item.GetIntValue("ITEM1", -1);
                 if (comunityDic.ContainsKey(id))
                 {
                     comunityDic[id].AddRelations(item);
@@ -307,23 +418,83 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
-        public void AddComunityUserData(System.IO.StreamReader sr)
+        public void AddComunityUserData(System.IO.StreamReader sr, out IEnumerable<string> errList)
         {
+            CreateComunityDic();
             foreach (var item in comunityDic.Values)
             {
                 item.UserIds = new List<int>();
+                item.Relations.Clear();
             }
-
-            foreach (var item in TSVFile.ReadLines(sr))
+            List<string> list = new List<string>();
+            List<int> idList = new List<int>();
+            foreach (var item in TSVFile.ReadLines(sr, out errList))
             {
-                int c_id = item.GetIntValue("Community_Id");
-                int u_id = item.GetIntValue("User_Id");
-                if (comunityDic.ContainsKey(c_id))
+                int c_id = item.GetIntValue("Community_Id",-1);
+                int u_id = item.GetIntValue("User_Id",-1);
+                if (c_id != -1 && u_id != -1)
                 {
-                    comunityDic[c_id].UserIds.Add(u_id);
+                    if (comunityDic.ContainsKey(c_id))
+                    {
+                        comunityDic[c_id].UserIds.Add(u_id);
+                        idList.Add(u_id);
+                    }
+
+                }
+                else
+                {
+                    list.Add(item.Count + "行目エラー。値がありませんでした"); 
+                }
+
+            }
+            list.AddRange(errList);
+            errList = list;
+            CreateRelation();
+            SetAllUser();
+            //int allCount = idList.Distinct().Count();
+
+            //foreach (var item in comunityDic.Values)
+            //{
+            //    foreach (var item2 in comunityDic.Values.Where(n=>n != item))
+            //    {
+            //        int countItem1 = item.UserIds.Count;
+            //        int countItem2 = item2.UserIds.Count;
+            //        int common = item.UserIds.Intersect(item2.UserIds).Count();
+
+            //        double c1 = (double)common / (double)countItem1;
+            //        double c2 = c1 - (double)countItem2 / (double)allCount;
+            //        item.AddRelations(item2.Id, c1, c2);
+            //    }
+            //}
+
+        }
+
+        private void CreateRelation()
+        {
+            CreateComunityDic();
+            List<int> idList = new List<int>();
+
+            foreach (var item in comunityDic.Values)
+            {
+                item.Relations.Clear();
+                idList.AddRange(item.UserIds);
+            }
+            int allCount = idList.Distinct().Count();
+            foreach (var item in comunityDic.Values)
+            {
+                foreach (var item2 in comunityDic.Values.Where(n => n != item))
+                {
+                    int countItem1 = item.UserIds.Count;
+                    int countItem2 = item2.UserIds.Count;
+                    int common = item.UserIds.Intersect(item2.UserIds).Count();
+
+                    double c1 = (double)common / (double)countItem1;
+                    double c2 = c1 - (double)countItem2 / (double)allCount;
+                    item.AddRelations(item2.Id, c1, c2);
                 }
             }
         }
+
 
         public void AddUserData(System.IO.StreamReader sr)
         {
@@ -331,6 +502,15 @@ namespace ClusterViewForSliverlinght.Models
             UserData.Create(sr);
         }
 
+        public void UserAttributeUnSelected()
+        {
+            foreach (var item in userAttributeGroupList)
+            {
+                item.UnSelected();
+            }
+        }
+
+        List<UserAttributeGroup> userAttributeGroupList = new List<UserAttributeGroup>();
         public IEnumerable<UserAttributeGroup> CreateUserAttributeGroup(IEnumerable<int> userIdList)
         {
             if (UserData != null && userIdList != null && userIdList.Any() == true)
@@ -356,13 +536,14 @@ namespace ClusterViewForSliverlinght.Models
                         }
                     }
                 }
+                userAttributeGroupList = userAttributeGroupDic.Values.ToList();
                 return userAttributeGroupDic.Values;
             }
             return new List<UserAttributeGroup>();
         }
 
 
-        public void ViewRelation(Comunity comunity, int max, RelationIndexType type)
+        public void ViewRelation(Comunity comunity, int max, RelationIndexType type, out List<ItemRelationViewData> list)
         {
             if (comunityDic == null)
             {
@@ -370,7 +551,7 @@ namespace ClusterViewForSliverlinght.Models
             }
             foreach (var item in comunityDic.Values)
             {
-                item.NewBrush(Colors.White, 1);
+                item.NewBrush(Colors.Transparent, 1);
             }
             comunity.NewBrush(Colors.Red, 0.8);
 
@@ -391,17 +572,28 @@ namespace ClusterViewForSliverlinght.Models
                     count++;
                 }
             }
+            list = new List<ItemRelationViewData>();
+            int i = 1;
+            foreach (var item in comunity.Relations.OrderByDescending(n => n.GetIndex(type)))
+            {
+                if (comunityDic.ContainsKey(item.ItemId))
+                {
+                    var c = comunityDic[item.ItemId];
+                    list.Add(new ItemRelationViewData() { Rank = i, Name = c.Name, 確信度 = item.確信度.ToString("F3"), 補正確信度 = item.補正確信度.ToString("F3") });
+                    i++;
+                }
+            }
 
         }
-        public void ViewRelation(int max, RelationIndexType type)
+        public void ViewRelation(int max, RelationIndexType type, out List<ItemRelationViewData> list)
         {
             if (comunityDic == null)
             {
                 CreateComunityDic();
             }
-            foreach (var item in comunityDic.Values.Where(n=>n.Selected==false))
+            foreach (var item in comunityDic.Values.Where(n => n.Selected == false))
             {
-                item.NewBrush(Colors.White, 1);
+                item.NewBrush(Colors.Transparent, 1);
             }
 
 
@@ -409,24 +601,42 @@ namespace ClusterViewForSliverlinght.Models
             List<ItemRelation> relationList = new List<ItemRelation>();
             foreach (var item in selectedList)
             {
-                relationList.AddRange(item.Relations.Where(n=>selectedList.Where(m=>m.Id ==n.ItemId).Any()==false)) ;
+                relationList.AddRange(item.Relations.Where(n => selectedList.Where(m => m.Id == n.ItemId).Any() == false));
             }
-            var d = relationList.GroupBy(n=>n.ItemId).Select(n=>new { n.Key, a = n.Aggregate(1.0,(m,l)=> l.GetIndex(type)*m)});
+            var d = relationList.GroupBy(n => n.ItemId).Select(n => new { n.Key, a = n.Aggregate(1.0, (m, l) => l.GetIndex(type) * m) });
 
             int half = max / 2;
             int count = 0;
 
-            foreach (var item in d.OrderByDescending(n=>n.a).Where(n=>comunityDic.ContainsKey( n.Key)==true).Take(max))
+            foreach (var item in d.OrderByDescending(n => n.a).Where(n => comunityDic.ContainsKey(n.Key) == true).Take(max))
             {
-                    if (count > half)
+                if (count > half)
+                {
+                    comunityDic[item.Key].NewBrush(Colors.Orange, 0.2);
+                }
+                else
+                {
+                    comunityDic[item.Key].NewBrush(Colors.Orange, 0.6);
+                }
+                count++;
+            }
+            int i = 1;
+            list = new List<ItemRelationViewData>();
+            foreach (var item in d.OrderByDescending(n => n.a))
+            {
+                if (comunityDic.ContainsKey(item.Key))
+                {
+                    var c = comunityDic[item.Key];
+                    if (type == RelationIndexType.確信度)
                     {
-                        comunityDic[item.Key].NewBrush(Colors.Orange, 0.2);
+                        list.Add(new ItemRelationViewData() { Rank = i, Name = c.Name, 確信度 = item.a.ToString("F3"), });
                     }
                     else
                     {
-                        comunityDic[item.Key].NewBrush(Colors.Orange, 0.6);
+                        list.Add(new ItemRelationViewData() { Rank = i, Name = c.Name, 補正確信度 = item.a.ToString("F3") });
                     }
-                    count++;
+                    i++;
+                }
             }
 
             //foreach (var item in comunity.Relations.OrderByDescending(n => n.GetIndex(type)).Take(max))
@@ -492,14 +702,49 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
+        public void AddCategroy()
+        {
+            var category = new Category();
+            foreach (var item in LayerGroup)
+            {
+                var layer = category.GetLayer(item.Name);
+                item.Items.Add(layer);
+            }
+            int count = 1;
+            while (true)
+            {
+                if (this.Categories.Where(n => n.KeyName == "C_" + count).Any())
+                {
+                    count++;
+                }
+                else
+                {
+                    category.KeyName = "C_" + count.ToString();
+                    break;
+                }
+            }
+            
+            Categories.Add(category);            
+        }
+
+        public void RemoveCategory(Category category)
+        {
+            foreach (var item in LayerGroup)
+            {
+                var layer = category.GetLayer(item.Name);
+                item.Items.Remove(layer);
+            }
+            Categories.Remove(category);
+        }
+
         public IEnumerable<int> GetUserIdList(Comunity c, string typeText)
         {
-            if (typeText == "単独")
+            if (typeText == "選択")
             {
-                if (MainPage.Mode == MainPage.MouseMode.選択)
+                if (MainPage.Mode == MainPage.MouseMode.複数選択)
                 {
                     List<int> list = new List<int>();
-                    foreach (var item in AllComunity.Where(n=>n.Selected==true))
+                    foreach (var item in AllComunity.Where(n => n.Selected == true))
                     {
                         list.AddRange(item.UserIds);
                     }
@@ -542,7 +787,7 @@ namespace ClusterViewForSliverlinght.Models
                     {
                         if (item.Items.Count > p)
                         {
-                            foreach (var item2 in item.Items.ElementAtOrDefault(p).Comunities.Where(n=>n.Deleted == false))
+                            foreach (var item2 in item.Items.ElementAtOrDefault(p).Comunities.Where(n => n.Deleted == false))
                             {
                                 list.AddRange(item2.UserIds);
                             }
@@ -553,9 +798,12 @@ namespace ClusterViewForSliverlinght.Models
                 else
                 {
                     List<int> list = new List<int>();
-                    foreach (var item in layer.Comunities.Where(n => n.Deleted == false))
+                    foreach (var item in layer.Comunities.Where(n => n.Deleted == false || n.UserIds != null))
                     {
-                        list.AddRange(item.UserIds);
+                        if (item.UserIds != null)
+                        {
+                            list.AddRange(item.UserIds);
+                        }
                     }
                     return list.Distinct();
                 }
@@ -563,6 +811,45 @@ namespace ClusterViewForSliverlinght.Models
 
         }
 
+
+        public void SearchHub()
+        {
+            foreach (var item2 in Categories)
+            {
+                item2.Update();
+            }
+            List<Tuple<double, Comunity>> list = new List<Tuple<double, Comunity>>();
+            foreach (var item in ComunityDic)
+            {
+                Dictionary<Category, double> cDic = new Dictionary<Category, double>();
+                foreach (var item2 in Categories)
+                {
+                    cDic.Add(item2, 0);
+                }
+                // cDic[item.Value.Category]++;
+
+                foreach (var item2 in item.Value.Relations.Where(n => n.NotUse == false).OrderByDescending(n => n.補正確信度).Take(20))
+                {
+                    if (ComunityDic.ContainsKey(item2.ItemId))
+                    {
+                        if (cDic.ContainsKey(ComunityDic[item2.ItemId].Category))
+                        {
+                            cDic[ComunityDic[item2.ItemId].Category] += item2.補正確信度;
+                        }
+                        else
+                        {
+                            cDic.Add(ComunityDic[item2.ItemId].Category, item2.補正確信度);
+                        }
+                    }
+                }
+                item.Value.IsHub = false;
+                list.Add(new Tuple<double, Comunity>(MyLib.Statistics.AvgStd.Getジニ係数(cDic.Values.ToArray()), item.Value));
+            }
+            foreach (var item in list.OrderBy(n => n.Item1).Take(10))
+            {
+                item.Item2.IsHub = true;
+            }
+        }
     }
 
 }

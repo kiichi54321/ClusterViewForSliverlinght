@@ -24,10 +24,28 @@ namespace ClusterViewForSliverlinght.Models
 
         public void Init()
         {
-            brush = new SolidColorBrush(Colors.White);
+           // brush = new SolidColorBrush(Colors.White);
             color = Colors.White;
-            opacity = 1;
+            opacity = 1;      
         }
+
+        public Comunity Clone()
+        {
+            Comunity c = new Comunity()
+            {
+                Deleted = this.Deleted,
+                Id = this.Id,
+                UserIds = this.UserIds,
+                Relations = this.Relations,
+                Tag = this.Tag,
+                Index = this.Index,
+                Name = this.Name,
+                ImageUrl = this.ImageUrl,
+                IsHub = this.IsHub
+            };
+            return c;
+        }
+
 
         [DataMember]
         public string Name { get; set; }
@@ -39,8 +57,32 @@ namespace ClusterViewForSliverlinght.Models
         public string Tag { get; set; }
         [DataMember]
         public double Index { get; set; }
+        private bool isHub = false;
         [DataMember]
-        public int Count { get; set; }
+        public bool IsHub { get { return isHub; } set { isHub = value; OnPropertyChanged("IsHubText"); } }
+        private bool isLock = false;
+        [DataMember]
+        public bool Lock { get { return isLock; } set { isLock = value; OnPropertyChanged("Lock"); } }
+
+        public string IsHubText
+        {
+            get { if (IsHub) return "●"; else return ""; }
+        }
+
+        public int Count
+        {
+            get
+            {
+                if (userIds != null)
+                {
+                    return userIds.Count;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
 
 
         bool deleted = false;
@@ -55,7 +97,14 @@ namespace ClusterViewForSliverlinght.Models
         [DataMember]
         public List<int> UserIds
         {
-            get { return userIds; }
+            get
+            {
+                if (userIds == null)
+                {
+                    userIds = new List<int>();
+                }
+                return userIds;
+            }
             set { userIds = value; }
         }
         public Visibility ImageVisibility
@@ -73,6 +122,9 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
+        public Layer Layer { get; set; }
+        public Category Category { get; set; }
+
         private List<ItemRelation> relations = new List<ItemRelation>();
         [DataMember]
         public List<ItemRelation> Relations
@@ -83,7 +135,20 @@ namespace ClusterViewForSliverlinght.Models
 
         public void AddRelations(TSVLine line)
         {
-            relations.Add(new ItemRelation() { ItemId = line.GetIntValue("ITEM2"), 確信度 = line.GetDoubleValue("確信度"), 補正確信度 = line.GetDoubleValue("補正確信度") });
+            relations.Add(new ItemRelation() { ItemId = line.GetIntValue("ITEM2", -1), 確信度 = line.GetDoubleValue("確信度", -1), 補正確信度 = line.GetDoubleValue("補正確信度", -1) });
+        }
+
+        public void AddRelations(int itemId, double 確信度, double 補正確信度)
+        {
+            relations.Add(new ItemRelation() { ItemId = itemId, 確信度 = 確信度, 補正確信度 = 補正確信度 });
+        }
+
+        public void AttributeView(string attribute)
+        {
+            foreach (var item in userIds)
+            {
+
+            }
         }
 
         private bool selected = false;
@@ -91,7 +156,8 @@ namespace ClusterViewForSliverlinght.Models
         public bool Selected
         {
             get { return selected; }
-            set {
+            set
+            {
                 if (selected != value)
                 {
                     ChangeSelect();
@@ -108,7 +174,7 @@ namespace ClusterViewForSliverlinght.Models
             }
             else
             {
-                this.NewBrush(Colors.White, 1);
+                this.NewBrush(Colors.Transparent, 1);
             }
         }
 
@@ -121,7 +187,7 @@ namespace ClusterViewForSliverlinght.Models
                 {
                     if (deleted)
                     {
-                       
+
                         return System.Windows.Visibility.Collapsed;
                     }
                     else
@@ -135,15 +201,15 @@ namespace ClusterViewForSliverlinght.Models
 
         public void ChangeDelete()
         {
-            deleted = !deleted;           
-            OnPropertyChanged("ForeBrush"); 
+            deleted = !deleted;
+            OnPropertyChanged("ForeBrush");
         }
         public void ChaqngeVisibility()
         {
             OnPropertyChanged("Visibility");
         }
 
-        Brush brush = new SolidColorBrush(Colors.White);
+        Brush brush ;
 
         Color color = Colors.White;
 
@@ -205,7 +271,7 @@ namespace ClusterViewForSliverlinght.Models
             {
                 if (brush == null)
                 {
-                    brush = new SolidColorBrush(Colors.White);
+                    brush = new SolidColorBrush(Colors.Transparent);
                 }
                 return brush;
             }
@@ -242,6 +308,8 @@ namespace ClusterViewForSliverlinght.Models
         public double 確信度 { get; set; }
         [DataMember]
         public double 補正確信度 { get; set; }
+        public bool NotUse { get; set; }
+
         public double GetIndex(RelationIndexType type)
         {
             if (type == RelationIndexType.確信度)
@@ -254,6 +322,14 @@ namespace ClusterViewForSliverlinght.Models
             }
             return 0;
         }
+    }
+
+    public class ItemRelationViewData
+    {
+        public int Rank { get; set; }
+        public string Name { get; set; }
+        public string 確信度 { get; set; }
+        public string 補正確信度 { get; set; }
     }
 
     public enum RelationIndexType
