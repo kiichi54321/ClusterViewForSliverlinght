@@ -28,6 +28,9 @@ namespace ClusterViewForSliverlinght
             graphView.ChangeDataGrid += new EventHandler<MyLib.Event.Args<List<View.Graph.RelationData>>>(graphView_ChangeDataGrid);
             MyLib.Task.Utility.UISyncContext = System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext();
             ClusteringSettingPanel.DataContext = ClusteringViewModel;
+            fileInputControl.Update = (n) => { clusterTable = n; ChangeClusterTable(); };
+            fileInputControl.UpdateClustering = (n) => { clusterTable = n; ChangeClusterTable();ClusteringViewModel.Run(); };
+            fileInputControl.GetClutsterTable = () => { return clusterTable; };
 
         }
         Analyze.ClusteringViewModel clusteringViewModel = new Analyze.ClusteringViewModel();
@@ -40,9 +43,14 @@ namespace ClusterViewForSliverlinght
             }
         }
         public void ChangeClusterTable()
-        {
+        {            
             ClusteringViewModel.ClusterTable = clusterTable;
             ClusterTableView.DataContext = clusterTable;
+            foreach(var item in clusterTable.ComunityDic.Values)
+            {
+                item.ImageUpDate();
+            }
+
         }
 
         void graphView_ChangeDataGrid(object sender, MyLib.Event.Args<List<View.Graph.RelationData>> e)
@@ -133,9 +141,9 @@ namespace ClusterViewForSliverlinght
                     clusterTable.Save(saveFileDialog.OpenFile());
                     MessageBox.Show("完了");
                 }
-                catch
+                catch(Exception ex)
                 {
-                    MessageBox.Show("ファイルの書き込みに失敗");
+                    MessageBox.Show("ファイルの書き込みに失敗"+ex.Message);
                 }
             }
         }
@@ -351,11 +359,47 @@ namespace ClusterViewForSliverlinght
             FrameworkElement tb = sender as FrameworkElement;
             Comunity c = tb.Tag as Comunity;
             mouseOverComunity = c;
+            if(Mode == MouseMode.名寄せ)
+            {
+                var control = sender as Border;
+                if (mouseOverComunity != dragItem)
+                {
+                    control.Background = new SolidColorBrush(Colors.Cyan);
+                }
+            }
         }
 
         private void Border_MouseLeave(object sender, MouseEventArgs e)
         {
             mouseOverComunity = null;
+            if (Mode == MouseMode.名寄せ)
+            {
+                var control = sender as Border;
+                control.Background = new SolidColorBrush(Colors.White);
+            }
+        }
+
+        private void TextBlock_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if(Mode == MouseMode.名寄せ)
+            {
+                if (dragItem.Name != mouseOverComunity.Name)
+                {
+                    mouseOverComunity.Marge(dragItem);
+                    dragItem.Layer.Comunities.Remove(dragItem);
+                }
+                else
+                {
+                    var c = mouseOverComunity.Comunity分離();
+                    if (c != null)
+                    {
+                        var i = mouseOverComunity.Layer.Comunities.IndexOf(mouseOverComunity);
+                        mouseOverComunity.Layer.Comunities.Insert(i + 1, c);
+                        c.Layer = mouseOverComunity.Layer;
+                        c.Category = mouseOverComunity.Layer.Category;
+                    }
+                }
+            }
         }
 
         private RelationIndexType GetRelationIndexType()
@@ -369,6 +413,8 @@ namespace ClusterViewForSliverlinght
                 return RelationIndexType.補正確信度;
             }
         }
+
+
 
         private void modeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -389,6 +435,11 @@ namespace ClusterViewForSliverlinght
             {
                 mouseMode = MouseMode.複数選択;
             }
+            else if (((ComboBoxItem)modeComboBox.SelectedItem).Content.ToString() == "名寄せ")
+            {
+                mouseMode = MouseMode.名寄せ;
+            }
+
             if (clusterTable != null)
             {
                 clusterTable.AllUnSeleted();
@@ -408,7 +459,7 @@ namespace ClusterViewForSliverlinght
         }
         public enum MouseMode
         {
-            移動, 選択, 削除, 複数選択
+            移動, 選択, 削除, 複数選択,名寄せ
         }
 
 
@@ -468,14 +519,17 @@ namespace ClusterViewForSliverlinght
                 if (AttributeContentControl.Visibility == System.Windows.Visibility.Visible)
                 {
                     var list = clusterTable.GetUserIdList(dragItem, ((ComboBoxItem)comboBox2.SelectedItem).Content.ToString());
-                    var g = clusterTable.CreateUserAttributeGroup(list);
-                    AttributeContentControl.Visibility = System.Windows.Visibility.Collapsed;
-                    AttributeContentControl.DataContext = g;
-                    if (g.Count() > 0)
+                    var g = clusterTable.UserData?.CreateUserAttributeGroup(list);
+                    if (g != null)
                     {
-                        UserCount.Text = g.First().Count.ToString();
+                        AttributeContentControl.Visibility = System.Windows.Visibility.Collapsed;
+                        AttributeContentControl.DataContext = g;
+                        if (g.Count() > 0)
+                        {
+                            UserCount.Text = g.First().Count.ToString();
+                        }
+                        AttributeContentControl.Visibility = System.Windows.Visibility.Visible;
                     }
-                    AttributeContentControl.Visibility = System.Windows.Visibility.Visible;
                 }
             }
         }
@@ -636,7 +690,7 @@ namespace ClusterViewForSliverlinght
         {
             var b = sender as Button;
             var t = b.Tag as UserAttributeData;
-            clusterTable.UserAttributeUnSelected();
+            clusterTable.UserData.UserAttributeUnSelected();
             clusterTable.ChangeColorByAttribute(t.Parent.GroupName, t.AttributeName);
             t.Selected = true;
         }
@@ -679,33 +733,33 @@ namespace ClusterViewForSliverlinght
 
         private void sample1Buntton_Click(object sender, RoutedEventArgs e)
         {
-            WebClient webClient = new WebClient(); 
-            Uri docUri = HtmlPage.Document.DocumentUri;
-           // if (webClient.IsBusy == false)
-            {
-              //  var u = new Uri(docUri, "Data/hanzawa.zip");
-                var u = new Uri("http://web.sfc.keio.ac.jp/~kiichi/ClusterViewForSliverlinght/Data/hanzawa.zip");
-                webClient.OpenReadAsync(u);
-                webClient.OpenReadCompleted += (o, e1) =>
-                {
-                    try
-                    {
-                        using (Ionic.Zip.ZipFile zip = Ionic.Zip.ZipFile.Read(e1.Result))
-                        using (System.IO.MemoryStream mStream = new System.IO.MemoryStream())
-                        {
-                            zip.First().Extract(mStream);
-                            clusterTable = ClusterTable.Load(mStream);
-                            ChangeClusterTable();
+           // WebClient webClient = new WebClient(); 
+           // Uri docUri = HtmlPage.Document.DocumentUri;
+           //// if (webClient.IsBusy == false)
+           // {
+           //   //  var u = new Uri(docUri, "Data/hanzawa.zip");
+           //  //   var u = new Uri("http://web.sfc.keio.ac.jp/~kiichi/ClusterViewForSliverlinght/Data/hanzawa.zip");
+           //     webClient.OpenReadAsync(u);
+           //     webClient.OpenReadCompleted += (o, e1) =>
+           //     {
+           //         try
+           //         {
+           //             using (Ionic.Zip.ZipFile zip = Ionic.Zip.ZipFile.Read(e1.Result))
+           //             using (System.IO.MemoryStream mStream = new System.IO.MemoryStream())
+           //             {
+           //                 zip.First().Extract(mStream);
+           //                 clusterTable = ClusterTable.Load(mStream);
+           //                 ChangeClusterTable();
 
-                            FilePanel.Visibility = System.Windows.Visibility.Collapsed;
-                        }
-                    }
-                    catch
-                    {
-                        MessageBox.Show("ダウンロードに失敗");
-                    }
-                };
-            }
+           //                 FilePanel.Visibility = System.Windows.Visibility.Collapsed;
+           //             }
+           //         }
+           //         catch
+           //         {
+           //             MessageBox.Show("ダウンロードに失敗");
+           //         }
+           //     };
+           // }
           
         }
 
@@ -718,6 +772,8 @@ namespace ClusterViewForSliverlinght
             //}
          
         }
+
+
 
 
     }

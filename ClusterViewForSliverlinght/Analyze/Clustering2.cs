@@ -11,6 +11,7 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Linq;
 using ClusterViewForSliverlinght.Models;
+using RawlerLib.MyExtend;
 
 namespace ClusterViewForSliverlinght.Analyze
 {
@@ -206,7 +207,7 @@ namespace ClusterViewForSliverlinght.Analyze
                         for (int k = 0; k < Result.Count; k++)
                         {
                             var p = r.GetPerformanceIndex();
-                            if (Result[k].GetPerformanceIndex() < p)
+                            if (Result[k].PerformaceIndex < p)
                             {
                                 Result.Insert(k, r);
                                 flag = false;
@@ -218,11 +219,20 @@ namespace ClusterViewForSliverlinght.Analyze
                 Progress(i / (double)tryCount);
             }
             Progress(1);
-            var baseResult = Result.OrderByDescending(n => n.GetPerformanceIndex()).First();
+
+
+            var baseResult = Result.OrderByDescending(n => n.ClusterNum).ThenByDescending(n => n.PerformaceIndex).First();
             foreach (var item in Result)
             {
                 item.CategorySort(baseResult);
             }
+
+            MyLib.Task.Utility.UITask(() =>
+            {
+                Result.SetList(Result.OrderByDescending(n => n.ClusterNum).ThenByDescending(n => n.PerformaceIndex));     
+            });
+      
+
             IsBusy = false;
         }
         public void Update()
@@ -261,7 +271,26 @@ namespace ClusterViewForSliverlinght.Analyze
         }
         public int MatchCount { get; set; }
         public Comunity OrignalComunity { get; set; }
+
+        private List<RelationData> relationDataList = new List<RelationData>();
+
+        public List<RelationData> RelationDataList
+        {
+            get { return relationDataList; }
+            set { relationDataList = value; }
+        }
+
+        public void CreateRealtionData(int takeComunity)
+        {
+            relationDataList = Relations.Where(n => n.NotUse == false).OrderByDescending(n => n.補正確信度).Take(takeComunity).Select(n => new RelationData() { ComunityId = n.ItemId, Value = n.補正確信度 }).ToList();
+        }
      
+    }
+
+    public struct RelationData
+    {
+        public int ComunityId { get; set; }
+        public double Value { get; set; }
     }
 
     public class ClusteringResult
@@ -270,7 +299,7 @@ namespace ClusterViewForSliverlinght.Analyze
         public Dictionary<string, LayerGroup> LayerGroup { get; set; }
         public List<ComunityEx> ComunityList { get; set; }
         public Dictionary<int, ComunityEx> ComunityDic { get; set; }
-        public string ViewText { get { return "評価指標:" + GetPerformanceIndex().ToString("F3"); } }
+        public string ViewText { get { return "評価指標:" + GetPerformanceIndex().ToString("F3")+ performanceText; } }
         public Clustering2 Parent { get; set; }
 
         //      int takeComunity = 20;
@@ -289,6 +318,17 @@ namespace ClusterViewForSliverlinght.Analyze
             ComunityList = new List<ComunityEx>();
             ComunityDic = new Dictionary<int, ComunityEx>();
         }
+
+        private string performanceText = string.Empty;
+        double performaceIndex = 0;
+
+        public double PerformaceIndex
+        {
+            get { return performaceIndex; }
+            set { performaceIndex = value; }
+        }
+
+        public int ClusterNum { get; set; }
 
         public double GetPerformanceIndex()
         {
@@ -329,18 +369,22 @@ namespace ClusterViewForSliverlinght.Analyze
             }
 
             double sum = 1;
-            foreach (var item in this.LayerGroup)
-            {
-                List<double> list2 = new List<double>();
-                foreach (var item2 in item.Value.Items)
-                {
-                    list2.Add(item2.Comunities.Count);
-                }
-                sum = sum * (1 - MyLib.Statistics.AvgStd.Getジニ係数(list2.ToArray()));
-            }
-
-
-            return list.Select(n => n.Item1).Average() * sum;
+            var l1 = this.Categories.Select(n => (double)n.Layer.SelectMany(m => m.Value.Comunities).SelectMany(l=>l.UserIds).Distinct().Count()).ToArray();
+            sum = MyLib.Statistics.AvgStd.Getジニ係数(l1);
+            ClusterNum = l1.Where(n => n> 0).Count();
+            //foreach (var item in this.LayerGroup)
+            //{
+            //    List<double> list2 = new List<double>();
+            //    foreach (var item2 in item.Value.Items)
+            //    {
+            //        list2.Add(item2.Comunities.Count);
+            //    }
+            //    sum = sum * (1 - MyLib.Statistics.AvgStd.Getジニ係数(list2.ToArray()));
+            //}
+            performanceText = "クラスタ数:" + ClusterNum + " 集中度:" + list.Where(n => double.IsNaN(n.Item1) == false).Select(n => n.Item1).Average().ToString("F3") + " 分散度:" + sum.ToString("F3");
+            PerformaceIndex = list.Where(n=>double.IsNaN( n.Item1)==false).Select(n => n.Item1).Average();
+            return PerformaceIndex;
+            //return list.Select(n => n.Item1).Average() * Math.Log(1/ sum);
         }
 
 
@@ -607,6 +651,8 @@ namespace ClusterViewForSliverlinght.Analyze
             return moveCount;
         }
 
+
+        #region 不使用
         Dictionary<Category, int> checkDividCategoryDic = new Dictionary<Category, int>();
 
         public bool DivideCategory()
@@ -754,7 +800,7 @@ namespace ClusterViewForSliverlinght.Analyze
             return new ChageCategoryData() { IsChanged = false };
         }
 
-
+        #endregion
 
 
 
@@ -805,12 +851,14 @@ namespace ClusterViewForSliverlinght.Analyze
                         }
                     }
                 }
+                item.CreateRealtionData(TakeComunity);
             }
 
 
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 2000; i++)
             {
                 bool endFlag = true;
+                
                 foreach (var item in ComunityList)
                 {
                     if (item.Lock)
@@ -819,22 +867,7 @@ namespace ClusterViewForSliverlinght.Analyze
                     }
                     else
                     {
-                        Dictionary<Models.Category, double> countDic = new Dictionary<Models.Category, double>();
-                        foreach (var item2 in item.Relations.Where(n =>n.NotUse == false ).OrderByDescending(n => n.補正確信度).Take(TakeComunity))
-                        {
-                            var c = ComunityDic[item2.ItemId].Category;
-                            if (c != null)
-                            {
-                                if (countDic.ContainsKey(c))
-                                {
-                                    countDic[c] += item2.補正確信度;
-                                }
-                                else
-                                {
-                                    countDic.Add(c, item2.補正確信度);
-                                }
-                            }
-                        }
+                        var countDic = item.RelationDataList.GroupBy(n => ComunityDic[n.ComunityId].Category).Select(n => new { key = n.Key, Value = n.Sum(m => m.Value) }).ToDictionary(n => n.key, n => n.Value);
                         if (countDic.Count == 0)
                         {
                             item.Layer.Tmp2Comunities.Add(item);

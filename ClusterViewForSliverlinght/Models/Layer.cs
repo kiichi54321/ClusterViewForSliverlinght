@@ -12,6 +12,7 @@ using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
+using System.Collections.Concurrent;
 
 namespace ClusterViewForSliverlinght.Models
 {
@@ -90,6 +91,7 @@ namespace ClusterViewForSliverlinght.Models
         {
             if (tmp2Comunities == null) tmp2Comunities = new List<Comunity>();
             tmpComunities.Clear();
+
             foreach (var item in tmp2Comunities)
             {
                 tmpComunities.Add(item);

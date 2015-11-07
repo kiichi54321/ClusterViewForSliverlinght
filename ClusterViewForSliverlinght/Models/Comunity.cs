@@ -11,6 +11,9 @@ using System.Windows.Shapes;
 using System.Runtime.Serialization;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Linq;
+using RawlerLib.MyExtend;
+using System.Windows.Media.Imaging;
 
 namespace ClusterViewForSliverlinght.Models
 {
@@ -46,9 +49,26 @@ namespace ClusterViewForSliverlinght.Models
             return c;
         }
 
-
+        private string name = string.Empty;
         [DataMember]
-        public string Name { get; set; }
+        public string Name { get { return name; } set { name = value; OnPropertyChanged("Name"); OnPropertyChanged("Count"); } }
+        
+        /// <summary>
+        /// 子を含めた名前
+        /// </summary>
+        public string Name2
+        {
+            get
+            {
+                List<string> list = new List<string>{Name};
+                foreach(var item in Children)
+                {
+                    list.Add(item.Name2);
+                }
+                return list.JoinText(",");
+            }
+        }
+        
         [DataMember]
         public int Id { get; set; }
         [DataMember]
@@ -73,14 +93,15 @@ namespace ClusterViewForSliverlinght.Models
         {
             get
             {
-                if (userIds != null)
-                {
-                    return userIds.Count;
-                }
-                else
-                {
-                    return 0;
-                }
+                return UserIds.Count;
+                //if (userIds != null)
+                //{
+                //    return userIds.Count;
+                //}
+                //else
+                //{
+                //    return 0;
+                //}
             }
         }
 
@@ -93,6 +114,8 @@ namespace ClusterViewForSliverlinght.Models
             set { deleted = value; }
         }
 
+        private List<int> allUserIds = null;
+
         private List<int> userIds = new List<int>();
         [DataMember]
         public List<int> UserIds
@@ -103,22 +126,106 @@ namespace ClusterViewForSliverlinght.Models
                 {
                     userIds = new List<int>();
                 }
-                return userIds;
+                if(allUserIds == null)
+                {
+                    allUserIds = new List<int>(userIds);
+                    foreach (var item in Children)
+                    {
+                        allUserIds.AddRange(item.UserIds);
+                    }
+                    allUserIds = allUserIds.Distinct().ToList();
+                }
+                return allUserIds;
             }
             set { userIds = value; }
         }
+
+        public void AddUserId(int id)
+        {
+            userIds.Add(id);
+        }
+
+        Stack<Comunity> children = new Stack<Comunity>();
+
+        [DataMember]
+        public List<Comunity> Children
+        {
+            get {
+                if (children == null) { children = new Stack<Comunity>(); }  
+                return children.ToList(); }
+            set { children = new Stack<Comunity>( value); }
+        }
+
+        public void Marge(Comunity c)
+        {
+            children.Push(c);
+            allUserIds = null;
+            OnPropertyChanged("Name2");
+            OnPropertyChanged("Count");
+        }
+
+        public Comunity Comunity分離()
+        {
+            if (children.Count > 0)
+            {
+                var c = children.Pop();
+                allUserIds = null;
+                OnPropertyChanged("Name2");
+                OnPropertyChanged("Count");
+                return c;
+            }
+            return null;
+        }
+
+        public void GetImageData()
+        {
+            var img = MyLib.String.GetTagContentList(name, "{", "}", false);
+            ImageVisibility = System.Windows.Visibility.Collapsed;
+            if (img.Any())
+            {
+                this.ImageUrl = img.First();
+                this.name = this.name.Replace("{" + ImageUrl + "}", "");
+                ImageVisibility = System.Windows.Visibility.Visible;
+
+                Image image = new Image() { Source = new BitmapImage(new Uri(ImageUrl)) };
+                ImageXaml = "<Image xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" Source=\""+ImageUrl +"\" MaxHeight=\"200\" MaxWidth=\"200\" ></Image>";
+             }
+
+            OnPropertyChanged("ImageUrl");
+            OnPropertyChanged("ImageUri");
+            OnPropertyChanged("ImageVisibility");
+        }
+
+        public string ImageXaml { get; set; }
+
+
+        public void ImageUpDate()
+        {
+            ImageVisibility = System.Windows.Visibility.Collapsed;
+            OnPropertyChanged("ImageUrl");
+            OnPropertyChanged("ImageData");
+            ImageVisibility = System.Windows.Visibility.Visible;
+        }
+
+ 
+        public Uri ImageUri
+        {
+            get {
+                return new Uri(ImageUrl,UriKind.Absolute);
+            }
+        }
+
+        Visibility imageVisibility = Visibility.Collapsed;
         public Visibility ImageVisibility
         {
             get
             {
-                if (string.IsNullOrEmpty(this.ImageUrl))
-                {
-                    return Visibility.Collapsed;
-                }
-                else
-                {
-                    return Visibility.Visible;
-                }
+                return imageVisibility;
+            }
+            set
+            {
+                imageVisibility = value;
+                OnPropertyChanged("ImageVisibility");
             }
         }
 
@@ -138,9 +245,9 @@ namespace ClusterViewForSliverlinght.Models
             relations.Add(new ItemRelation() { ItemId = line.GetIntValue("ITEM2", -1), 確信度 = line.GetDoubleValue("確信度", -1), 補正確信度 = line.GetDoubleValue("補正確信度", -1) });
         }
 
-        public void AddRelations(int itemId, double 確信度, double 補正確信度)
+        public void AddRelations(int itemId, double 確信度, double 補正確信度,int 共起数)
         {
-            relations.Add(new ItemRelation() { ItemId = itemId, 確信度 = 確信度, 補正確信度 = 補正確信度 });
+            relations.Add(new ItemRelation() { ItemId = itemId, 共起数 = 共起数, 確信度 = 確信度, 補正確信度 = 補正確信度 });
         }
 
         public void AttributeView(string attribute)
@@ -150,6 +257,7 @@ namespace ClusterViewForSliverlinght.Models
 
             }
         }
+
 
         private bool selected = false;
 
@@ -308,6 +416,7 @@ namespace ClusterViewForSliverlinght.Models
         public double 確信度 { get; set; }
         [DataMember]
         public double 補正確信度 { get; set; }
+        public int 共起数 { get; set; }
         public bool NotUse { get; set; }
 
         public double GetIndex(RelationIndexType type)
@@ -328,6 +437,7 @@ namespace ClusterViewForSliverlinght.Models
     {
         public int Rank { get; set; }
         public string Name { get; set; }
+        public int 共起数 { get; set; }
         public string 確信度 { get; set; }
         public string 補正確信度 { get; set; }
     }

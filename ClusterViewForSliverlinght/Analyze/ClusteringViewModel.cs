@@ -140,24 +140,30 @@ namespace ClusterViewForSliverlinght.Analyze
                 {
                     runClustering = new RelayCommand(() =>
                     {
-                        if (clustering.IsBusy == false)
-                        {
-                            System.Threading.Tasks.Task.Factory.StartNew(() =>
-                            {
-                                clustering.Run();
-                            }).ContinueWith((n) => 
-                                 MyLib.Task.Utility.UITask(() => SeletectedResult = this.Results.FirstOrDefault())                                
-                                );
-                        }
-                        else
-                        {
-                            ReportText += "クラスタリング中です。";
-                        }
+                        Run();
                     });
                 }
                 return runClustering;
             }
         }
+
+        public void Run()
+        {
+            if (clustering.IsBusy == false)
+            {
+                System.Threading.Tasks.Task.Factory.StartNew(() =>
+                {
+                    clustering.Run();
+                }).ContinueWith((n) =>
+                     MyLib.Task.Utility.UITask(() => SeletectedResult = this.Results.FirstOrDefault())
+                    );
+            }
+            else
+            {
+                ReportText += "クラスタリング中です。";
+            }
+        }
+
         RelayCommand resultClear;
         public RelayCommand ResultClear
         {

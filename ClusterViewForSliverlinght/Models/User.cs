@@ -41,11 +41,18 @@ namespace ClusterViewForSliverlinght.Models
         {
             if (attributeDic.ContainsKey(attributeName))
             {
-                return attributeDic[attributeName];
+                if( attributeDic[attributeName].Length>0)
+                {
+                    return attributeDic[attributeName];
+                }
+                else
+                {
+                    return "不明";
+                }
             }
             else
             {
-                return null;
+                return "不明";
             }
         }
         public IEnumerable<string> AttributeNameList
@@ -117,6 +124,20 @@ namespace ClusterViewForSliverlinght.Models
             }
         }
 
+
+        public void Add(int uid,string attributeName,string value)
+        {
+            if(UserDic.ContainsKey(uid))
+            {
+                UserDic[uid].AddAttribute(attributeName, value);
+            }
+            else
+            {
+                UserDic.Add(uid, new User());
+                UserDic[uid].AddAttribute(attributeName, value);
+            }
+        }
+
         public double GetRate(string attributeName, string value, IEnumerable<int> userIdList)
         {
             int count = 0;
@@ -135,6 +156,64 @@ namespace ClusterViewForSliverlinght.Models
                 
             }
             return (double)(count / (double)all);
+        }
+
+        public void UserAttributeUnSelected()
+        {
+            foreach (var item in userAttributeGroupList)
+            {
+                item.UnSelected();
+            }
+        }
+        List<UserAttributeGroup> userAttributeGroupList = new List<UserAttributeGroup>();
+        public IEnumerable<UserAttributeGroup> CreateUserAttributeGroup(IEnumerable<int> userIdList)
+        {
+            if ( userIdList != null && userIdList.Any() == true)
+            {
+                Dictionary<string, UserAttributeGroup> userAttributeGroupDic = new Dictionary<string, UserAttributeGroup>();
+                this.SetUpData();
+
+
+                foreach (var item in userIdList.Distinct())
+                {
+                    if (UserDic.ContainsKey(item))
+                    {
+                        foreach (var key in attributeNameList)
+                        {
+                            string value = userDic[item].GetAttribute(key);
+                             if (userAttributeGroupDic.ContainsKey(key))
+                            {
+                                userAttributeGroupDic[key].Add(value);
+                            }
+                            else
+                            {
+                                userAttributeGroupDic.Add(key, new UserAttributeGroup() { GroupName = key });
+                                userAttributeGroupDic[key].Add(value);
+                            }
+                        }
+                     
+                    }
+                    else
+                    {
+                        foreach (var key in attributeNameList)
+                        {
+                            string value = "不明";
+                            if (userAttributeGroupDic.ContainsKey(key))
+                            {
+                                userAttributeGroupDic[key].Add(value);
+                            }
+                            else
+                            {
+                                userAttributeGroupDic.Add(key, new UserAttributeGroup() { GroupName = key });
+                                userAttributeGroupDic[key].Add(value);
+                            }
+                        }
+                    }
+                }
+                userAttributeGroupList = userAttributeGroupDic.Values.ToList();
+                return userAttributeGroupDic.Values;
+            }
+            return new List<UserAttributeGroup>();
         }
 
     }

@@ -349,7 +349,23 @@ namespace ClusterViewForSliverlinght
             }
             return defaultValue;
         }
-        
+
+        public string GetValue(int column, string defaultValue)
+        {           
+            if (column > -1 )
+            {
+                if (data.Length > column)
+                {
+                    return data[column];
+                }
+                else
+                {
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
+        }
+
 
         public int GetIntValue(string column)
         {
